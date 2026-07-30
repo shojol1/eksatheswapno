@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { auth, db } from '../firebase';
 import {
   signInWithEmailAndPassword,
@@ -481,16 +482,7 @@ export const AuthProvider = ({ children }) => {
   } : null);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center animate-pulse">
-            <span className="text-white font-bold text-2xl font-bengali">এস</span>
-          </div>
-          <p className="text-slate-400 text-sm font-bengali">লোড হচ্ছে...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner text="তথ্য লোড হচ্ছে..." fullScreen={true} />;
   }
 
   return (

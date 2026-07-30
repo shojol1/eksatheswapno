@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, ArrowLeft, CheckCircle2, Wallet, Upload, X, AlertCircle, FileText, Check } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function AddCollection() {
   const { currentUser, collections, addCollection } = useAuth();
@@ -112,6 +113,7 @@ export default function AddCollection() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {isSubmitting && <LoadingSpinner text="জমা এন্ট্রি সংরক্ষণ করা হচ্ছে..." fullScreen={true} />}
       
       {/* Back Button & Header */}
       <div className="flex items-center space-x-3">
