@@ -3,8 +3,31 @@ import { useAuth } from '../context/AuthContext';
 import { Building2, ArrowDownLeft, ArrowUpRight, CreditCard, Landmark, Copy, Check, Share2 } from 'lucide-react';
 
 export default function Bank() {
-  const { bank } = useAuth();
+  const { 
+    collections = [], 
+    expenses = [], 
+    profits = [], 
+    bank = {}, 
+    investments = [], 
+    bankCharges = [], 
+    dpsEntries = [] 
+  } = useAuth();
   const [copiedField, setCopiedField] = useState(null);
+
+  // Compute Somiti net remaining balance (matching HomeFragment.java)
+  const totalAllTime = collections
+    .filter(c => !c.status || String(c.status).toLowerCase() === 'approved')
+    .reduce((sum, c) => sum + Number(c.amount || 0), 0);
+  const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const totalProfit = profits.reduce((sum, p) => sum + Number(p.totalProfitAmount || p.amount || 0), 0);
+  const totalInvestmentAmt = investments.reduce((sum, i) => sum + Number(i.amount || 0), 0);
+  const totalBankChargeAmt = bankCharges.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+  const totalDpsAmt = dpsEntries.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+
+  const totalOutflows = totalExpense + totalInvestmentAmt + totalBankChargeAmt + totalDpsAmt;
+  const somitiRemainingCash = (totalAllTime + totalProfit) - totalOutflows;
+
+  const displayBalance = (bank && bank.balance > 0) ? bank.balance : somitiRemainingCash;
 
   // Exact account details from Android project (fragment_bank.xml)
   const bankData = {
@@ -12,7 +35,7 @@ export default function Bank() {
     accountNumber: bank.accountNumber || '1101008927613',
     bankName: bank.bankName || 'Jamuna Bank PLC',
     routingNumber: bank.routingNumber || '130591276',
-    balance: bank.balance || 0,
+    balance: displayBalance,
     transactions: bank.transactions || []
   };
 

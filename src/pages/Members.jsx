@@ -2,6 +2,35 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Users, PlusCircle, Phone, Search, Shield, User, Wallet, Calendar, CheckCircle2, Clock, Eye, X, FileText } from 'lucide-react';
 
+function ProfileAvatar({ src, name, sizeClass = "w-12 h-12", textClass = "text-lg" }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className={`${sizeClass} rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center overflow-hidden relative shadow-sm flex-shrink-0`}>
+      {src ? (
+        <>
+          {!loaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 z-10">
+              <div className="w-5 h-5 rounded-full border-2 border-transparent border-t-indigo-400 border-r-indigo-400 animate-spin" />
+            </div>
+          )}
+          <img
+            src={src}
+            alt={name || 'Member'}
+            onLoad={() => setLoaded(true)}
+            onError={() => setLoaded(true)}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          />
+        </>
+      ) : (
+        <span className={`${textClass} font-bold text-indigo-400 font-bengali`}>
+          {name ? name.charAt(0) : 'স'}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function Members() {
   const { members, addMember, collections } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -102,15 +131,7 @@ export default function Members() {
               className="glass-card p-5 rounded-2xl border border-slate-800 space-y-4 hover:border-indigo-500/50 transition-all cursor-pointer group hover:scale-[1.01]"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden group-hover:border-indigo-500 transition-colors">
-                  {member.profileImage ? (
-                    <img src={member.profileImage} alt={member.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-lg font-bold text-indigo-400 font-bengali">
-                      {member.name ? member.name.charAt(0) : 'স'}
-                    </span>
-                  )}
-                </div>
+                <ProfileAvatar src={member.profileImage} name={member.name} sizeClass="w-12 h-12" textClass="text-lg" />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold text-white font-bengali truncate group-hover:text-indigo-300 transition-colors">
                     {member.name}
@@ -165,13 +186,7 @@ export default function Members() {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-indigo-500/40 flex items-center justify-center overflow-hidden">
-                  {selectedMember.profileImage ? (
-                    <img src={selectedMember.profileImage} alt={selectedMember.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-6 h-6 text-indigo-400" />
-                  )}
-                </div>
+                <ProfileAvatar src={selectedMember.profileImage} name={selectedMember.name} sizeClass="w-14 h-14" textClass="text-xl" />
                 <div>
                   <h2 className="text-xl font-bold text-white">{selectedMember.name}</h2>
                   <p className="text-xs text-slate-400 font-mono">{selectedMember.phone}</p>

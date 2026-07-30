@@ -13,11 +13,22 @@ import {
   CheckCircle2, 
   ArrowUpRight, 
   Sparkles,
-  Users
+  Users,
+  User
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { currentUser, collections, members, expenses, profits, bank, approveCollection } = useAuth();
+  const { 
+    currentUser, 
+    collections, 
+    members, 
+    expenses, 
+    profits, 
+    bank, 
+    investments = [], 
+    bankCharges = [], 
+    dpsEntries = [] 
+  } = useAuth();
   const navigate = useNavigate();
 
   // Filters state (matching HomeFragment.java)
@@ -72,6 +83,18 @@ export default function Dashboard() {
     .reduce((sum, c) => sum + Number(c.amount || 0), 0);
   const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
   const totalProfit = profits.reduce((sum, p) => sum + Number(p.totalProfitAmount || p.amount || 0), 0);
+  const totalInvestmentAmt = investments.reduce((sum, i) => sum + Number(i.amount || 0), 0);
+  const totalBankChargeAmt = bankCharges.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+  const totalDpsAmt = dpsEntries.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+
+  // Total outflows = Expenses + Investments + Bank Charges + DPS
+  const totalOutflows = totalExpense + totalInvestmentAmt + totalBankChargeAmt + totalDpsAmt;
+
+  // Somiti Net Cash Balance = (Total Collections + Total Profit) - Total Outflows
+  const somitiRemainingCash = (totalAllTime + totalProfit) - totalOutflows;
+
+  // Final Bank Cash Balance to display
+  const displayBankBalance = (bank && bank.balance > 0) ? bank.balance : somitiRemainingCash;
 
   // Target matching HomeFragment.java MONTHLY_TARGET = 50000
   const MONTHLY_TARGET = 50000;
@@ -102,18 +125,33 @@ export default function Dashboard() {
       <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>একসাথে স্বপ্ন ডিজিটাল ড্যাশবোর্ড</span>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center space-x-4 sm:space-x-5">
+            {/* Logged-in User Profile Picture (Circular - Larger Size) */}
+            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-slate-900 border-4 border-emerald-500/50 shadow-2xl shadow-emerald-500/20 flex-shrink-0 flex items-center justify-center overflow-hidden">
+              {currentUser?.profileImage ? (
+                <img 
+                  src={currentUser.profileImage} 
+                  alt={currentUser.name || 'Profile'} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-400" />
+              )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white font-bengali">
-              স্বাগতম, {currentUser?.name || 'ব্যবহারকারী'}!
-            </h1>
-            <p className="text-slate-400 text-sm mt-1 font-bengali">
-              আপনার সমিতির আর্থিক হিসাব ও কালেকশনের সর্বশেষ আপডেট দেখুন।
-            </p>
+
+            <div>
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>একসাথে স্বপ্ন ডিজিটাল ড্যাশবোর্ড</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white font-bengali">
+                স্বাগতম, {currentUser?.name || 'ব্যবহারকারী'}!
+              </h1>
+              <p className="text-slate-400 text-sm mt-1 font-bengali">
+                আপনার সমিতির আর্থিক হিসাব ও কালেকশনের সর্বশেষ আপডেট দেখুন।
+              </p>
+            </div>
           </div>
 
           {/* Month & Year Selection Dropdowns (matching HomeFragment.java) */}
@@ -232,7 +270,7 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Bank Treasury Balance */}
+        {/* Bank Cash Balance Card */}
         <div 
           onClick={() => navigate('/bank')}
           className="glass-card p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all cursor-pointer group"
@@ -246,10 +284,10 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-2xl font-bold text-indigo-300 mt-2 font-bengali">
-            ৳ {bank.balance.toLocaleString('bn-BD')}
+            ৳ {displayBankBalance.toLocaleString('bn-BD')}
           </p>
           <p className="text-[11px] text-slate-500 mt-1 font-bengali">
-            {bank.bankName}
+            সমিতির অবশিষ্ট ক্যাশ স্থিতি
           </p>
         </div>
 
@@ -339,46 +377,46 @@ export default function Dashboard() {
           <div className="space-y-2.5">
             <button
               onClick={() => navigate('/add-collection')}
-              className="w-full p-3.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 font-semibold text-sm flex items-center justify-between transition-colors font-bengali"
+              className="w-full p-3.5 rounded-xl glass-emerald font-semibold text-sm flex items-center justify-between transition-all font-bengali group"
             >
               <div className="flex items-center space-x-3">
-                <PlusCircle className="w-5 h-5 text-emerald-400" />
-                <span>নতুন জমা এন্ট্রি দিন</span>
+                <PlusCircle className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="text-emerald-300">নতুন জমা এন্ট্রি দিন</span>
               </div>
               <ArrowUpRight className="w-4 h-4 text-emerald-400" />
             </button>
 
             <button
               onClick={() => navigate('/expenses')}
-              className="w-full p-3.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-sm flex items-center justify-between transition-colors font-bengali"
+              className="w-full p-3.5 rounded-xl glass-rose font-semibold text-sm flex items-center justify-between transition-all font-bengali group"
             >
               <div className="flex items-center space-x-3">
-                <TrendingDown className="w-5 h-5 text-rose-400" />
-                <span>ব্যয়/বিনিয়োগ</span>
+                <TrendingDown className="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" />
+                <span className="text-rose-300">ব্যয়/বিনিয়োগ</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400" />
+              <ArrowUpRight className="w-4 h-4 text-rose-400" />
             </button>
 
             <button
               onClick={() => navigate('/profits')}
-              className="w-full p-3.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-sm flex items-center justify-between transition-colors font-bengali"
+              className="w-full p-3.5 rounded-xl glass-amber font-semibold text-sm flex items-center justify-between transition-all font-bengali group"
             >
               <div className="flex items-center space-x-3">
-                <TrendingUp className="w-5 h-5 text-amber-400" />
-                <span>মুনাফা বন্টন হিসাব</span>
+                <TrendingUp className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="text-amber-300">মুনাফা বন্টন হিসাব</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400" />
+              <ArrowUpRight className="w-4 h-4 text-amber-400" />
             </button>
 
             <button
               onClick={() => navigate('/members')}
-              className="w-full p-3.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-sm flex items-center justify-between transition-colors font-bengali"
+              className="w-full p-3.5 rounded-xl glass-indigo font-semibold text-sm flex items-center justify-between transition-all font-bengali group"
             >
               <div className="flex items-center space-x-3">
-                <Users className="w-5 h-5 text-indigo-400" />
-                <span>সদস্যবৃন্দ দেখতে ক্লিক করুন</span>
+                <Users className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
+                <span className="text-indigo-300">সদস্যবৃন্দ দেখতে ক্লিক করুন</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400" />
+              <ArrowUpRight className="w-4 h-4 text-indigo-400" />
             </button>
           </div>
         </div>

@@ -1,17 +1,19 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Bell, User, Shield, LogOut, Menu, Globe, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateWithLoading } from '../context/NavigationContext';
+import { useTheme } from '../context/ThemeContext';
+import { Bell, User, Shield, LogOut, Menu, Sun, Moon } from 'lucide-react';
 
 export default function Navbar({ onOpenMobileMenu }) {
   const { currentUser, logout, collections, notifications } = useAuth();
-  const navigate = useNavigate();
+  const navigateWithLoading = useNavigateWithLoading();
+  const { theme, toggleTheme } = useTheme();
 
   // Pending count for admin
   const pendingCount = collections.filter(c => c.status === 'pending').length;
 
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800 bg-slate-900/80 backdrop-blur-md transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Left Side: Mobile Menu Button & Branding */}
@@ -25,7 +27,7 @@ export default function Navbar({ onOpenMobileMenu }) {
           </button>
 
           <div 
-            onClick={() => navigate('/')} 
+            onClick={() => navigateWithLoading('/')} 
             className="flex items-center space-x-3 cursor-pointer group"
           >
             <img
@@ -44,16 +46,29 @@ export default function Navbar({ onOpenMobileMenu }) {
           </div>
         </div>
 
-        {/* Right Side: Notifications, User Profile */}
+        {/* Right Side: Theme Toggle, Notifications, User Profile */}
         <div className="flex items-center space-x-3 sm:space-x-4">
+
+          {/* Dark / Light Mode Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-amber-400 border border-slate-700/60 shadow-sm transition-all flex items-center justify-center cursor-pointer"
+            title={theme === 'dark' ? "লাইট মোডে সুইচ করুন" : "ডার্ক মোডে সুইচ করুন"}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-5 h-5 text-amber-400 hover:rotate-45 transition-transform" />
+            ) : (
+              <Moon className="w-5 h-5 text-indigo-500 hover:-rotate-12 transition-transform" />
+            )}
+          </button>
 
           {/* Notifications Button */}
           <button
             onClick={() => {
               if (currentUser?.role === 'admin') {
-                navigate('/pending');
+                navigateWithLoading('/pending');
               } else {
-                navigate('/notifications');
+                navigateWithLoading('/notifications');
               }
             }}
             className="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
@@ -75,7 +90,7 @@ export default function Navbar({ onOpenMobileMenu }) {
           {currentUser ? (
             <div className="flex items-center space-x-3 pl-2 border-l border-slate-800">
               <div 
-                onClick={() => navigate('/profile')} 
+                onClick={() => navigateWithLoading('/profile')} 
                 className="flex items-center space-x-2.5 cursor-pointer group"
               >
                 <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden group-hover:border-emerald-500 transition-colors">
@@ -100,7 +115,7 @@ export default function Navbar({ onOpenMobileMenu }) {
               <button
                 onClick={() => {
                   logout();
-                  navigate('/login');
+                  navigateWithLoading('/login');
                 }}
                 className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
                 title="লগ আউট"
@@ -110,7 +125,7 @@ export default function Navbar({ onOpenMobileMenu }) {
             </div>
           ) : (
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigateWithLoading('/login')}
               className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-md shadow-emerald-600/20"
             >
               লগইন

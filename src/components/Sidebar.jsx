@@ -1,6 +1,7 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNavigateWithLoading } from '../context/NavigationContext';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -18,6 +19,9 @@ import {
 
 export default function Sidebar({ mobileOpen, onCloseMobile }) {
   const { currentUser, collections } = useAuth();
+  const location = useLocation();
+  const navigateWithLoading = useNavigateWithLoading();
+
   const pendingCount = collections.filter(c => c.status === 'pending').length;
 
   const navItems = [
@@ -60,18 +64,22 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
           if (item.adminOnly && currentUser?.role !== 'admin') return null;
 
           const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+
           return (
-            <NavLink
+            <a
               key={item.path}
-              to={item.path}
-              onClick={onCloseMobile}
-              className={({ isActive }) =>
-                `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/20 font-semibold'
-                    : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-                }`
-              }
+              href={item.path}
+              onClick={(e) => {
+                e.preventDefault();
+                onCloseMobile();
+                navigateWithLoading(item.path);
+              }}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/20 font-semibold'
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              }`}
             >
               <div className="flex items-center space-x-3">
                 <Icon className="w-5 h-5 opacity-90" />
@@ -83,7 +91,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
                   {item.badge}
                 </span>
               )}
-            </NavLink>
+            </a>
           );
         })}
       </nav>
