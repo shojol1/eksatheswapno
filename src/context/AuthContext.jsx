@@ -101,91 +101,90 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // ──────────────────────────────────────────────
-  // 2. Real-time Firestore Listeners
+  // 2. Real-time Firestore Listeners (Triggers as soon as Auth settles)
   // ──────────────────────────────────────────────
 
-  // Listen to "collections" collection
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'collections'), (snapshot) => {
+    if (!currentUser) {
+      setCollections([]);
+      setMembers([]);
+      setExpenses([]);
+      setInvestments([]);
+      setBankCharges([]);
+      setDpsEntries([]);
+      setProfits([]);
+      setNotifications([]);
+      return;
+    }
+
+    // Listen to "collections" collection
+    const unsubCollections = onSnapshot(collection(db, 'collections'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setCollections(data);
     }, (err) => console.error('Collections listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "users" collection for members list
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'users'), (snapshot) => {
+    // Listen to "users" collection for members list
+    const unsubMembers = onSnapshot(collection(db, 'users'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setMembers(data);
     }, (err) => console.error('Members listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "expenses" collection
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'expenses'), (snapshot) => {
+    // Listen to "expenses" collection
+    const unsubExpenses = onSnapshot(collection(db, 'expenses'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setExpenses(data);
     }, (err) => console.error('Expenses listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "investments" collection (Android project section)
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'investments'), (snapshot) => {
+    // Listen to "investments" collection
+    const unsubInvestments = onSnapshot(collection(db, 'investments'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setInvestments(data);
     }, (err) => console.error('Investments listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "bank_charges" collection
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'bank_charges'), (snapshot) => {
+    // Listen to "bank_charges" collection
+    const unsubBankCharges = onSnapshot(collection(db, 'bank_charges'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setBankCharges(data);
     }, (err) => console.error('Bank charges listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "dps_entries" collection
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'dps_entries'), (snapshot) => {
+    // Listen to "dps_entries" collection
+    const unsubDps = onSnapshot(collection(db, 'dps_entries'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setDpsEntries(data);
     }, (err) => console.error('DPS listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "profits" collection
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'profits'), (snapshot) => {
+    // Listen to "profits" collection
+    const unsubProfits = onSnapshot(collection(db, 'profits'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setProfits(data);
     }, (err) => console.error('Profits listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "notifications" collection (Real Firebase notifications)
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'notifications'), (snapshot) => {
+    // Listen to "notifications" collection
+    const unsubNotifications = onSnapshot(collection(db, 'notifications'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setNotifications(data);
     }, (err) => console.error('Notifications listener error:', err));
-    return () => unsub();
-  }, []);
 
-  // Listen to "bank" collection
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'bank'), (snapshot) => {
+    // Listen to "bank" collection
+    const unsubBank = onSnapshot(collection(db, 'bank'), (snapshot) => {
       if (!snapshot.empty) {
         const bankDoc = snapshot.docs[0];
         setBank({ id: bankDoc.id, ...bankDoc.data(), transactions: bankDoc.data().transactions || [] });
       }
     }, (err) => console.error('Bank listener error:', err));
-    return () => unsub();
-  }, []);
+
+    return () => {
+      unsubCollections();
+      unsubMembers();
+      unsubExpenses();
+      unsubInvestments();
+      unsubBankCharges();
+      unsubDps();
+      unsubProfits();
+      unsubNotifications();
+      unsubBank();
+    };
+  }, [currentUser]);
 
   // ──────────────────────────────────────────────
   // 3. Auth Methods (Firebase)

@@ -4,7 +4,7 @@ import { Bell, User, Shield, LogOut, Menu, Globe, ChevronDown } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 
 export default function Navbar({ onOpenMobileMenu }) {
-  const { currentUser, logout, collections } = useAuth();
+  const { currentUser, logout, collections, notifications } = useAuth();
   const navigate = useNavigate();
 
   // Pending count for admin
@@ -49,16 +49,26 @@ export default function Navbar({ onOpenMobileMenu }) {
 
           {/* Notifications Button */}
           <button
-            onClick={() => navigate('/pending')}
+            onClick={() => {
+              if (currentUser?.role === 'admin') {
+                navigate('/pending');
+              } else {
+                navigate('/notifications');
+              }
+            }}
             className="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            title="পেন্ডিং নোটিফিকেশন"
+            title={currentUser?.role === 'admin' ? "পেন্ডিং নোটিফিকেশন" : "নোটিফিকেশনসমূহ"}
           >
             <Bell className="w-5 h-5" />
-            {currentUser?.role === 'admin' && pendingCount > 0 && (
+            {currentUser?.role === 'admin' && pendingCount > 0 ? (
               <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white animate-pulse">
                 {pendingCount}
               </span>
-            )}
+            ) : currentUser?.role !== 'admin' && notifications?.length > 0 ? (
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                {notifications.length}
+              </span>
+            ) : null}
           </button>
 
           {/* Profile Dropdown / User Details */}
