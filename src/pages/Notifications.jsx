@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Bell, CheckCircle2, Clock, AlertTriangle, Info } from 'lucide-react';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function Notifications() {
   const { currentUser, collections, notifications: firebaseNotifications, members } = useAuth();
@@ -52,7 +53,7 @@ export default function Notifications() {
       displayNotifications.push({
         id: notifId,
         title: 'নতুন পেমেন্ট অনুমোদনের অপেক্ষায়',
-        message: `${name} - ${item.month || ''} ${item.year} - ৳ ${Number(item.amount || 0).toLocaleString('bn-BD')}`,
+        message: `${name} - ${item.month || ''} ${toBengaliDigits(item.year)} - ৳ ${Number(item.amount || 0).toLocaleString('bn-BD')}`,
         type: 'pending',
         time: item.date || 'পেন্ডিং',
         amount: item.amount
@@ -69,7 +70,7 @@ export default function Notifications() {
       displayNotifications.push({
         id: notifId,
         title: 'পেমেন্ট অনুমোদিত',
-        message: `${name} এর ${item.month ? item.month + ' ' : ''}${item.year} এর ৳ ${Number(item.amount || 0).toLocaleString('bn-BD')} টাকা অনুমোদিত হয়েছে।`,
+        message: `${name} এর ${item.month ? item.month + ' ' : ''}${toBengaliDigits(item.year)} এর ৳ ${Number(item.amount || 0).toLocaleString('bn-BD')} টাকা অনুমোদিত হয়েছে।`,
         type: 'approved',
         time: item.date || 'অনুমোদিত',
         amount: item.amount
@@ -105,10 +106,10 @@ export default function Notifications() {
       <div>
         <h1 className="text-2xl font-bold text-white font-bengali flex items-center space-x-2">
           <Bell className="w-7 h-7 text-amber-400" />
-          <span>নোটিফিকেশন সেন্টার (Real-time)</span>
+          <span>নোটিফিকেশন সেন্টার</span>
         </h1>
         <p className="text-xs text-slate-400 mt-1 font-bengali">
-          আপনার ফায়ারবেস ডেটাবেজ ও কালেকশনের সর্বশেষ আপডেট ও নোটিফিকেশনসমূহ
+          সমিতির সকল গুরুত্বপূর্ণ আপডেট, অ্যালার্ট এবং বিজ্ঞপ্তি
         </p>
       </div>
 

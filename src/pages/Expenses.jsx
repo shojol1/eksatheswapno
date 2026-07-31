@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { TrendingDown, PlusCircle, Search, Calendar, Building2, Wallet, Trash2, Shield, Lock } from 'lucide-react';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function Expenses() {
   const {
@@ -431,7 +432,7 @@ export default function Expenses() {
                       className="w-full px-3 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 font-mono"
                     >
                       {['2026', '2027', '2028', '2029', '2030'].map(y => (
-                        <option key={y} value={y}>{y}</option>
+                        <option key={y} value={y}>{toBengaliDigits(y)}</option>
                       ))}
                     </select>
                   </div>
@@ -443,7 +444,7 @@ export default function Expenses() {
                 <input
                   type="number"
                   required
-                  placeholder="5000"
+                  placeholder="৫০০০"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500 font-mono text-base font-bold"

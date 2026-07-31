@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Wallet, Search, PlusCircle, CheckCircle2, Clock, Eye, Trash2, Check, X, FileText, Image as ImageIcon } from 'lucide-react';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
+import ReceiptViewerModal from '../components/ReceiptViewerModal';
 
 export default function Collections() {
   const { collections, members, currentUser, approveCollection, rejectCollection, deleteCollection } = useAuth();
@@ -99,13 +101,15 @@ export default function Collections() {
           </p>
         </div>
 
-        <button
-          onClick={() => navigate('/add-collection')}
-          className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all font-bengali self-start sm:self-auto"
-        >
-          <PlusCircle className="w-5 h-5" />
-          <span>নতুন জমা এন্ট্রি</span>
-        </button>
+        {currentUser?.role !== 'admin' && (
+          <button
+            onClick={() => navigate('/add-collection')}
+            className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all font-bengali self-start sm:self-auto"
+          >
+            <PlusCircle className="w-5 h-5" />
+            <span>নতুন জমা এন্ট্রি</span>
+          </button>
+        )}
       </div>
 
       {/* Filter & Search Bar */}
@@ -140,11 +144,11 @@ export default function Collections() {
           className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer"
         >
           <option value="ALL">সকল বছর</option>
-          <option value="2026">2026</option>
-          <option value="2027">2027</option>
-          <option value="2028">2028</option>
-          <option value="2029">2029</option>
-          <option value="2030">2030</option>
+          <option value="2026">২০২৬</option>
+          <option value="2027">২০২৭</option>
+          <option value="2028">২০২৮</option>
+          <option value="2029">২০২৯</option>
+          <option value="2030">২০৩০</option>
         </select>
 
         {/* Month Filter (Hides when paymentType is 'yearly') */}
@@ -212,7 +216,7 @@ export default function Collections() {
                         {name}
                       </td>
                       <td className="px-6 py-4 text-slate-300">
-                        {item.month ? `${item.month} ${item.year}` : item.year}
+                        {item.month ? `${item.month} ${toBengaliDigits(item.year)}` : toBengaliDigits(item.year)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-semibold ${
@@ -295,25 +299,15 @@ export default function Collections() {
       </div>
 
       {/* Receipt Modal */}
+      {/* Receipt Image Modal Viewer with Zoom & Loading Spinner */}
       {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="glass-card p-6 rounded-3xl border border-slate-800 max-w-lg w-full space-y-4 font-bengali">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white">জমা রসিদ বিবরণী</h3>
-              <button onClick={() => setSelectedReceipt(null)} className="text-slate-400 hover:text-white">✕</button>
-            </div>
-            <div className="text-xs space-y-2 text-slate-300">
-              <p><span className="text-slate-500">সদস্য:</span> {getMemberName(selectedReceipt)}</p>
-              <p><span className="text-slate-500">পরিমাণ:</span> ৳ {Number(selectedReceipt.amount).toLocaleString('bn-BD')}</p>
-              <p><span className="text-slate-500">মাস/বছর:</span> {selectedReceipt.month} {selectedReceipt.year}</p>
-            </div>
-            {selectedReceipt.receiptUrl && (
-              <div className="rounded-xl overflow-hidden border border-slate-700 max-h-80 flex items-center justify-center bg-slate-900">
-                <img src={selectedReceipt.receiptUrl} alt="Receipt" className="max-h-72 object-contain" />
-              </div>
-            )}
-          </div>
-        </div>
+        <ReceiptViewerModal
+          src={selectedReceipt.receiptUrl}
+          title={`জমা রসিদ - ${getMemberName(selectedReceipt)} (${selectedReceipt.month || ''} ${toBengaliDigits(selectedReceipt.year)})`}
+          onClose={() => setSelectedReceipt(null)}
+          onApprove={currentUser?.role === 'admin' && selectedReceipt.status === 'pending' ? () => approveCollection(selectedReceipt.id) : null}
+          onReject={currentUser?.role === 'admin' && selectedReceipt.status === 'pending' ? () => rejectCollection(selectedReceipt.id) : null}
+        />
       )}
 
     </div>

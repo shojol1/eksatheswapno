@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Clock, CheckCircle2, XCircle, ShieldAlert, Eye, Image as ImageIcon, X } from 'lucide-react';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
+import ReceiptViewerModal from '../components/ReceiptViewerModal';
 
 export default function PendingApprovals() {
   const { currentUser, collections, members, approveCollection, rejectCollection } = useAuth();
@@ -71,7 +73,7 @@ export default function PendingApprovals() {
                     <div>
                       <h3 className="text-base font-bold text-white">{name}</h3>
                       <span className="inline-block px-2.5 py-0.5 mt-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        {item.month ? `${item.month} ${item.year}` : `${item.year} (বার্ষিক)`}
+                        {item.month ? `${item.month} ${toBengaliDigits(item.year)}` : `${toBengaliDigits(item.year)} (বার্ষিক)`}
                       </span>
                     </div>
                     <span className="text-xl font-extrabold text-emerald-400 font-mono">
@@ -98,7 +100,7 @@ export default function PendingApprovals() {
                     <span className="text-[11px] text-slate-400 font-semibold block mb-1.5">জমাকৃত রসিদের কপি:</span>
                     {hasReceipt ? (
                       <div 
-                        onClick={() => setSelectedReceipt({ url: item.receiptUrl, title: `${name} - ${item.month || ''} ${item.year}` })}
+                        onClick={() => setSelectedReceipt({ id: item.id, url: item.receiptUrl, title: `${name} - ${item.month || ''} ${toBengaliDigits(item.year)}` })}
                         className="relative group rounded-xl overflow-hidden border border-slate-700 bg-slate-900 cursor-pointer h-32 flex items-center justify-center"
                       >
                         <img
@@ -144,41 +146,15 @@ export default function PendingApprovals() {
         </div>
       )}
 
-      {/* Receipt Image Modal Viewer */}
+      {/* Receipt Image Modal Viewer with Zoom, Drag Pan & Direct Approval Actions */}
       {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-          <div className="glass-card p-5 rounded-3xl border border-slate-800 max-w-2xl w-full space-y-4 relative font-bengali">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-                <ImageIcon className="w-4 h-4 text-amber-400" />
-                <span>পেমেন্ট রসিদের কপি ({selectedReceipt.title})</span>
-              </h3>
-              <button 
-                onClick={() => setSelectedReceipt(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="max-h-[70vh] overflow-auto rounded-2xl border border-slate-800 bg-slate-900 flex items-center justify-center p-2">
-              <img
-                src={selectedReceipt.url}
-                alt="Enlarged Receipt"
-                className="max-w-full max-h-[65vh] object-contain rounded-xl"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={() => setSelectedReceipt(null)}
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl"
-              >
-                বন্ধ করুন
-              </button>
-            </div>
-          </div>
-        </div>
+        <ReceiptViewerModal
+          src={selectedReceipt.url}
+          title={`পেমেন্ট রসিদের কপি (${selectedReceipt.title})`}
+          onClose={() => setSelectedReceipt(null)}
+          onApprove={selectedReceipt.id ? () => approveCollection(selectedReceipt.id) : null}
+          onReject={selectedReceipt.id ? () => rejectCollection(selectedReceipt.id) : null}
+        />
       )}
 
     </div>

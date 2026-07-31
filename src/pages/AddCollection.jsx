@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, ArrowLeft, CheckCircle2, Wallet, Upload, X, AlertCircle, FileText, Check } from 'lucide-react';
+import { PlusCircle, ArrowLeft, CheckCircle2, Wallet, Upload, X, AlertCircle, FileText, Check, ShieldAlert } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function AddCollection() {
@@ -51,13 +51,25 @@ export default function AddCollection() {
     }
   }, [year, collections, currentUser]);
 
+  if (currentUser?.role === 'admin') {
+    return (
+      <div className="glass-card p-8 rounded-3xl border border-slate-800 text-center max-w-lg mx-auto space-y-4 font-bengali">
+        <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto" />
+        <h2 className="text-xl font-bold text-white font-bengali">এক্সেস সংরক্ষিত</h2>
+        <p className="text-sm text-slate-400 font-bengali">
+          নতুন জমা সেকশনটি শুধুমাত্র সাধারণ সদস্যদের জন্য তৈরি। অ্যাডমিনগণ পেন্ডিং অ্যাপ্রুভাল বা ড্যাশবোর্ড ব্যবহার করতে পারেন।
+        </p>
+      </div>
+    );
+  }
+
   // Handle receipt image file selection (max 2MB limit)
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB limit
       if (file.size > MAX_SIZE_BYTES) {
-        alert(`⚠️ রসিদের ছবির সাইজ সর্বোচ্চ ২ এমবি (2MB) হতে পারবে! আপনার নির্বাচন করা ফাইলের সাইজ ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+        alert(`⚠️ রসিদের ছবির সাইজ সর্বোচ্চ ২ এমবি (২MB) হতে পারবে! আপনার নির্বাচন করা ফাইলের সাইজ ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
         e.target.value = '';
         return;
       }
@@ -128,7 +140,7 @@ export default function AddCollection() {
             নতুন কালেকশন জমা দিন
           </h1>
           <p className="text-xs text-slate-400 font-bengali mt-0.5">
-            সমিতির ৫,০০০ টাকা সঞ্চয় কিস্তির টাকা এন্ট্রি করুন
+            সমিতির ৫,০০০ টাকা সঞ্চয় জমা এন্ট্রি করুন
           </p>
         </div>
       </div>
@@ -166,11 +178,11 @@ export default function AddCollection() {
                 onChange={(e) => setYear(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-900 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
               >
-                <option value="2026">2026</option>
-                <option value="2027">2027</option>
-                <option value="2028">2028</option>
-                <option value="2029">2029</option>
-                <option value="2030">2030</option>
+                <option value="2026">২০২৬</option>
+                <option value="2027">২০২৭</option>
+                <option value="2028">২০২৮</option>
+                <option value="2029">২০২৯</option>
+                <option value="2030">২০৩০</option>
               </select>
             </div>
 
@@ -218,7 +230,7 @@ export default function AddCollection() {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="5000"
+                placeholder="৫০০০"
                 required
                 className="w-full pl-4 pr-16 py-3 bg-slate-900 border border-slate-700/80 rounded-xl text-white text-base font-bold focus:outline-none focus:border-emerald-500 font-mono"
               />

@@ -65,7 +65,7 @@ export default function Login() {
             একসাথে স্বপ্ন সমিতি
           </h2>
           <p className="text-sm text-slate-400 font-medium mt-1 font-bengali">
-            সঞ্চয় ও ঋণদান সমিতি ম্যানেজমেন্ট
+            সঞ্চয় সমিতি ম্যানেজমেন্ট
           </p>
         </div>
 

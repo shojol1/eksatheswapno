@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNavigateWithLoading } from '../context/NavigationContext';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -27,7 +28,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
   const navItems = [
     { path: '/', label: 'ড্যাশবোর্ড', icon: LayoutDashboard },
     { path: '/collections', label: 'কালেকশন তালিকা', icon: Wallet },
-    { path: '/add-collection', label: 'নতুন জমা দিন', icon: PlusCircle },
+    { path: '/add-collection', label: 'নতুন জমা দিন', icon: PlusCircle, memberOnly: true },
     { 
       path: '/pending', 
       label: 'পেন্ডিং অ্যাপ্রুভাল', 
@@ -40,7 +41,6 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
     { path: '/profits', label: 'মুনাফা ও লাভ', icon: TrendingUp },
     { path: '/bank', label: 'ব্যাংক হিসাব', icon: Building2 },
     { path: '/members', label: 'সদস্যবৃন্দ', icon: Users },
-    { path: '/notifications', label: 'নোটিফিকেশন', icon: Bell },
     { path: '/profile', label: 'আমার প্রোফাইল', icon: UserCheck },
   ];
 
@@ -62,6 +62,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
       <nav className="flex-1 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           if (item.adminOnly && currentUser?.role !== 'admin') return null;
+          if (item.memberOnly && currentUser?.role === 'admin') return null;
 
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -88,7 +89,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
 
               {item.badge && (
                 <span className="px-2 py-0.5 text-xs font-bold text-white bg-rose-500 rounded-full">
-                  {item.badge}
+                  {toBengaliDigits(item.badge)}
                 </span>
               )}
             </a>

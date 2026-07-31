@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { AlertCircle, Phone, MessageSquare, Calendar, CheckCircle2, UserX } from 'lucide-react';
+import ProfileAvatar from '../components/ProfileAvatar';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function DueMembers() {
   const { members, collections } = useAuth();
@@ -154,7 +156,7 @@ export default function DueMembers() {
             <span>মাসিক বকেয়া সদস্য তালিকা</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            যে সকল সদস্য নির্ধারিত মাসে ৫,০০০ টাকা সঞ্চয় কিস্তি পরিশোধ করেননি
+            যে সকল সদস্য নির্ধারিত মাসে ৫,০০০ টাকা সঞ্চয় জমা দেননি
           </p>
         </div>
 
@@ -175,9 +177,9 @@ export default function DueMembers() {
             onChange={(e) => setSelectedYear(e.target.value)}
             className="bg-transparent text-emerald-400 text-xs font-bold focus:outline-none cursor-pointer"
           >
-            <option value="2026" className="bg-slate-900 text-white">2026</option>
-            <option value="2027" className="bg-slate-900 text-white">2028</option>
-            <option value="2028" className="bg-slate-900 text-white">2028</option>
+            <option value="2026" className="bg-slate-900 text-white">২০২৬</option>
+            <option value="2027" className="bg-slate-900 text-white">২০২৭</option>
+            <option value="2028" className="bg-slate-900 text-white">২০২৮</option>
           </select>
         </div>
       </div>
@@ -189,7 +191,7 @@ export default function DueMembers() {
             {selectedMonth} {selectedYear} এর মোট বকেয়া সদস্য
           </p>
           <p className="text-2xl font-extrabold text-white mt-1">
-            {dueMembersList.length} জন
+            {toBengaliDigits(dueMembersList.length)} জন
           </p>
         </div>
         <div className="text-right">
@@ -220,7 +222,7 @@ export default function DueMembers() {
             {selectedMonth} {selectedYear} মাসে কোন বকেয়া নেই!
           </h3>
           <p className="text-xs text-slate-400">
-            সকল সাধারণ সদস্য ({generalMembers.length} জন) তাদের নির্ধারিত কিস্তি সময়মতো পরিশোধ করেছেন।
+            সকল সাধারণ সদস্য ({toBengaliDigits(generalMembers.length)} জন) তাদের নির্ধারিত সঞ্চয় সময়মতো জমা দিয়েছেন।
           </p>
         </div>
       ) : (
@@ -229,16 +231,16 @@ export default function DueMembers() {
             <div key={member.id} className="glass-card p-5 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4 hover:border-rose-500/40 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-11 h-11 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 font-bold text-lg overflow-hidden">
-                    {member.profileImage ? (
-                      <img src={member.profileImage} alt={member.name} className="w-full h-full object-cover" />
-                    ) : (
-                      member.name ? member.name.charAt(0) : 'স'
-                    )}
-                  </div>
+                  <ProfileAvatar
+                    src={member.profileImage}
+                    name={member.name}
+                    fallbackType="initial"
+                    className="w-11 h-11 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold text-lg"
+                    textClass="text-lg text-rose-400"
+                  />
                   <div>
                     <h3 className="text-sm font-bold text-white">{member.name}</h3>
-                    <p className="text-xs text-slate-400 font-mono mt-0.5">{member.phone || 'মোবাইল নম্বর নেই'}</p>
+                    <p className="text-xs text-slate-400 font-mono mt-0.5">{toBengaliDigits(member.phone) || 'মোবাইল নম্বর নেই'}</p>
                   </div>
                 </div>
                 <span className="px-2 py-1 bg-rose-950 text-rose-400 border border-rose-800 rounded-lg text-xs font-bold">
@@ -247,7 +249,7 @@ export default function DueMembers() {
               </div>
 
               <div className="p-3 bg-slate-900/80 rounded-xl text-xs flex items-center justify-between border border-slate-800">
-                <span className="text-slate-400">অবস্থা / সঞ্চয় কিস্তি:</span>
+                <span className="text-slate-400">অবস্থা / সঞ্চয় জমা:</span>
                 <span className="font-bold text-rose-400 text-sm">৳ ৫,০০০ (জমা দেয়নি)</span>
               </div>
 
@@ -262,7 +264,7 @@ export default function DueMembers() {
                       <span>কল দিন</span>
                     </a>
                     <a
-                      href={`sms:${member.phone}?body=প্রিয় ${member.name}, একসাথে স্বপ্ন সমিতির ${selectedMonth} ${selectedYear} মাসের ৫০০০ টাকা সঞ্চয় কিস্তি বাকি আছে। দয়া করে প্রদান করুন।`}
+                      href={`sms:${member.phone}?body=প্রিয় ${member.name}, একসাথে স্বপ্ন সমিতির ${selectedMonth} ${toBengaliDigits(selectedYear)} মাসের ৫,০০০ টাকা সঞ্চয় বাকি আছে। দয়া করে প্রদান করুন।`}
                       className="flex-1 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 font-semibold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-colors"
                     >
                       <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />

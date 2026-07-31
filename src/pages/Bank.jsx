@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Building2, ArrowDownLeft, ArrowUpRight, CreditCard, Landmark, Copy, Check, Share2 } from 'lucide-react';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function Bank() {
   const { 
@@ -107,7 +108,7 @@ export default function Bank() {
           <div className="p-4 bg-slate-900/90 rounded-2xl border border-slate-800 flex items-center justify-between">
             <div>
               <span className="text-xs text-slate-400 block font-semibold">Account Number</span>
-              <p className="text-white font-mono font-extrabold text-base mt-0.5">{bankData.accountNumber}</p>
+              <p className="text-white font-mono font-extrabold text-base mt-0.5">{toBengaliDigits(bankData.accountNumber)}</p>
             </div>
             <button
               onClick={() => copyToClipboard(bankData.accountNumber, 'account')}
@@ -137,7 +138,7 @@ export default function Bank() {
           <div className="p-4 bg-slate-900/90 rounded-2xl border border-slate-800 flex items-center justify-between">
             <div>
               <span className="text-xs text-slate-400 block font-semibold">Routing Number</span>
-              <p className="text-white font-mono font-extrabold text-base mt-0.5">{bankData.routingNumber}</p>
+              <p className="text-white font-mono font-extrabold text-base mt-0.5">{toBengaliDigits(bankData.routingNumber)}</p>
             </div>
             <button
               onClick={() => copyToClipboard(bankData.routingNumber, 'routing')}
@@ -168,7 +169,7 @@ export default function Bank() {
             <ol className="list-decimal list-inside space-y-1 text-slate-300">
               <li>Jamuna Bank অ্যাপ বা Internet Banking এ লগইন করুন।</li>
               <li>‘Fund Transfer’ অপশন নির্বাচন করুন।</li>
-              <li>সমিতির Account Number: <strong className="font-mono text-white">1101008927613</strong> লিখুন।</li>
+              <li>সমিতির Account Number: <strong className="font-mono text-white">১১০১০০৮৯২৭৬১৩</strong> লিখুন।</li>
               <li>টাকার পরিমাণ দিয়ে Confirm করুন।</li>
               <li>সফল হলে ট্রানজেকশন রসিদের স্ক্রিনশট রাখুন।</li>
             </ol>
@@ -183,7 +184,7 @@ export default function Bank() {
               <li>আপনার ব্যাংকের Mobile Banking বা Internet Banking এ লগইন করুন।</li>
               <li>‘NPSB / Interbank Transfer’ অপশন নির্বাচন করুন।</li>
               <li>Bank Name: <strong>Jamuna Bank PLC</strong> নির্বাচন করুন।</li>
-              <li>Account Number ও Routing Number: <strong className="font-mono text-white">130591276</strong> দিন।</li>
+              <li>Account Number ও Routing Number: <strong className="font-mono text-white">১৩০৫৯১২৭৬</strong> দিন।</li>
               <li>পরিমাণ লিখে Confirm করুন।</li>
             </ol>
           </div>

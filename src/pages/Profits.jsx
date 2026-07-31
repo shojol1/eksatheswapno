@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { TrendingUp, PlusCircle, Calendar, Users, Coins, Trash2, Edit3, Save } from 'lucide-react';
+import { TrendingUp, PlusCircle, Coins, Calendar, Users, Edit3, Trash2, Shield, Lock } from 'lucide-react';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function Profits() {
   const { profits, addProfit, updateProfit, deleteProfit, members, currentUser } = useAuth();
@@ -244,14 +245,14 @@ export default function Profits() {
                 <input
                   type="number"
                   required
-                  placeholder="15000"
+                  placeholder="১৫০০০"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-amber-500"
                 />
                 {amount && (
                   <p className="text-xs text-amber-400 mt-1">
-                    জনপ্রতি বন্টন: ৳ {Math.floor(Number(amount) / targetMemberCount).toLocaleString('bn-BD')} ({targetMemberCount} জন সাধারণ সদস্য)
+                    জনপ্রতি বন্টন: ৳ {Math.floor(Number(amount) / targetMemberCount).toLocaleString('bn-BD')} ({toBengaliDigits(targetMemberCount)} জন সাধারণ সদস্য)
                   </p>
                 )}
               </div>

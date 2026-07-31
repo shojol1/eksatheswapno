@@ -1,35 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Users, PlusCircle, Phone, Search, Shield, User, Wallet, Calendar, CheckCircle2, Clock, Eye, X, FileText } from 'lucide-react';
-
-function ProfileAvatar({ src, name, sizeClass = "w-12 h-12", textClass = "text-lg" }) {
-  const [loaded, setLoaded] = useState(false);
-
-  return (
-    <div className={`${sizeClass} rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center overflow-hidden relative shadow-sm flex-shrink-0`}>
-      {src ? (
-        <>
-          {!loaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 z-10">
-              <div className="w-5 h-5 rounded-full border-2 border-transparent border-t-indigo-400 border-r-indigo-400 animate-spin" />
-            </div>
-          )}
-          <img
-            src={src}
-            alt={name || 'Member'}
-            onLoad={() => setLoaded(true)}
-            onError={() => setLoaded(true)}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-          />
-        </>
-      ) : (
-        <span className={`${textClass} font-bold text-indigo-400 font-bengali`}>
-          {name ? name.charAt(0) : 'স'}
-        </span>
-      )}
-    </div>
-  );
-}
+import ProfileAvatar from '../components/ProfileAvatar';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
+import ReceiptViewerModal from '../components/ReceiptViewerModal';
 
 export default function Members() {
   const { members, addMember, collections } = useAuth();
@@ -136,7 +110,7 @@ export default function Members() {
                   <h3 className="text-sm font-bold text-white font-bengali truncate group-hover:text-indigo-300 transition-colors">
                     {member.name}
                   </h3>
-                  <p className="text-xs text-slate-400 font-mono">{member.phone}</p>
+                  <p className="text-xs text-slate-400 font-mono">{toBengaliDigits(member.phone)}</p>
                 </div>
                 <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bengali">
                   সদস্য
@@ -245,7 +219,7 @@ export default function Members() {
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                            {item.month ? `${item.month} ${item.year}` : `${item.year} (বাৎসরিক)`}
+                            {item.month ? `${item.month} ${toBengaliDigits(item.year)}` : `${toBengaliDigits(item.year)} (বাৎসরিক)`}
                           </span>
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             !item.status || String(item.status).toLowerCase() === 'approved' 
@@ -293,19 +267,13 @@ export default function Members() {
         </div>
       )}
 
-      {/* Full Screen Receipt Modal */}
+      {/* Full Screen Receipt Modal with Zoom & Loading Spinner */}
       {viewingReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-          <div className="glass-card p-4 rounded-3xl border border-slate-800 max-w-lg w-full space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <span className="text-xs font-bold text-white">রিসিট কপি</span>
-              <button onClick={() => setViewingReceipt(null)} className="text-slate-400 hover:text-white">✕</button>
-            </div>
-            <div className="max-h-[70vh] overflow-auto flex justify-center bg-slate-900 rounded-2xl p-2">
-              <img src={viewingReceipt} alt="রিসিট কপি" className="max-w-full h-auto rounded-xl object-contain" />
-            </div>
-          </div>
-        </div>
+        <ReceiptViewerModal
+          src={viewingReceipt}
+          title="সদস্য জমার রসিদ কপি"
+          onClose={() => setViewingReceipt(null)}
+        />
       )}
 
       {/* Add Member Modal */}
@@ -334,7 +302,7 @@ export default function Members() {
                 <input
                   type="tel"
                   required
-                  placeholder="01XXXXXXXXX"
+                  placeholder="০১৭১২৩৪৫৬৭৮"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"

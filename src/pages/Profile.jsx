@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Phone, Shield, Edit3, Save, ArrowLeft, LogOut, Wallet, Calendar, MapPin, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ProfileAvatar from '../components/ProfileAvatar';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function Profile() {
   const { currentUser, logout, collections, updateUserProfile } = useAuth();
@@ -94,13 +96,12 @@ export default function Profile() {
 
         <div className="relative z-10 space-y-4">
           {/* Avatar */}
-          <div className="mx-auto w-24 h-24 rounded-full bg-slate-800 border-4 border-emerald-500/40 flex items-center justify-center overflow-hidden shadow-xl shadow-emerald-500/10">
-            {currentUser.profileImage ? (
-              <img src={currentUser.profileImage} alt={currentUser.name} className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-12 h-12 text-emerald-400" />
-            )}
-          </div>
+          <ProfileAvatar
+            src={currentUser.profileImage}
+            name={currentUser.name}
+            className="mx-auto w-24 h-24 rounded-full bg-slate-800 border-4 border-emerald-500/40 shadow-xl shadow-emerald-500/10"
+            iconClassName="w-12 h-12"
+          />
 
           <div>
             <h2 className="text-2xl font-bold text-white font-bengali">{currentUser.name}</h2>
@@ -129,7 +130,7 @@ export default function Profile() {
         <div className="glass-indigo p-5 rounded-2xl border border-indigo-500/30 text-center">
           <Calendar className="w-6 h-6 text-indigo-400 mx-auto" />
           <p className="text-xl font-bold text-white font-bengali mt-2 font-mono">
-            {monthlyPaidCount} মাস
+            {toBengaliDigits(monthlyPaidCount)} মাস
           </p>
           <p className="text-xs text-indigo-300 font-bengali mt-0.5">মাসিক পরিশোধ</p>
         </div>
@@ -137,7 +138,7 @@ export default function Profile() {
         <div className="glass-purple p-5 rounded-2xl border border-purple-500/30 text-center">
           <Calendar className="w-6 h-6 text-purple-400 mx-auto" />
           <p className="text-xl font-bold text-white font-bengali mt-2 font-mono">
-            {yearlyPaidCount} বছর
+            {toBengaliDigits(yearlyPaidCount)} বছর
           </p>
           <p className="text-xs text-purple-300 font-bengali mt-0.5">বাৎসরিক পরিশোধ</p>
         </div>
@@ -216,7 +217,7 @@ export default function Profile() {
                 <Phone className="w-4 h-4" />
                 <span>মোবাইল:</span>
               </span>
-              <span className="text-sm font-semibold text-white font-mono">{currentUser.phone || 'অনির্ধারিত'}</span>
+              <span className="text-sm font-semibold text-white font-mono">{toBengaliDigits(currentUser.phone) || 'অনির্ধারিত'}</span>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-slate-900/80 rounded-xl border border-slate-800">

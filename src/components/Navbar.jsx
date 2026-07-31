@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigateWithLoading } from '../context/NavigationContext';
 import { useTheme } from '../context/ThemeContext';
 import { Bell, User, Shield, LogOut, Menu, Sun, Moon } from 'lucide-react';
+import ProfileAvatar from './ProfileAvatar';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function Navbar({ onOpenMobileMenu }) {
   const { currentUser, logout, collections, notifications } = useAuth();
@@ -64,26 +66,16 @@ export default function Navbar({ onOpenMobileMenu }) {
 
           {/* Notifications Button */}
           <button
-            onClick={() => {
-              if (currentUser?.role === 'admin') {
-                navigateWithLoading('/pending');
-              } else {
-                navigateWithLoading('/notifications');
-              }
-            }}
+            onClick={() => navigateWithLoading('/notifications')}
             className="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            title={currentUser?.role === 'admin' ? "পেন্ডিং নোটিফিকেশন" : "নোটিফিকেশনসমূহ"}
+            title="নোটিফিকেশন তালিকা"
           >
             <Bell className="w-5 h-5" />
-            {currentUser?.role === 'admin' && pendingCount > 0 ? (
+            {(notifications?.length > 0 || (currentUser?.role === 'admin' && pendingCount > 0)) && (
               <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white animate-pulse">
-                {pendingCount}
+                {toBengaliDigits(currentUser?.role === 'admin' ? (pendingCount + (notifications?.length || 0)) : notifications?.length)}
               </span>
-            ) : currentUser?.role !== 'admin' && notifications?.length > 0 ? (
-              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
-                {notifications.length}
-              </span>
-            ) : null}
+            )}
           </button>
 
           {/* Profile Dropdown / User Details */}
@@ -93,13 +85,12 @@ export default function Navbar({ onOpenMobileMenu }) {
                 onClick={() => navigateWithLoading('/profile')} 
                 className="flex items-center space-x-2.5 cursor-pointer group"
               >
-                <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden group-hover:border-emerald-500 transition-colors">
-                  {currentUser.profileImage ? (
-                    <img src={currentUser.profileImage} alt={currentUser.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-5 h-5 text-emerald-400" />
-                  )}
-                </div>
+                <ProfileAvatar
+                  src={currentUser.profileImage}
+                  name={currentUser.name}
+                  className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 group-hover:border-emerald-500 transition-colors"
+                  iconClassName="w-5 h-5"
+                />
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors truncate max-w-[120px]">
                     {currentUser.name}
