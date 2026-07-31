@@ -4,7 +4,8 @@
 
 @font-face {
   font-family: 'Kalpurush';
-  src: url('https://cdn.jsdelivr.net/gh/maateen/kalpurush@master/kalpurush.ttf') format('truetype');
+  src: url('/fonts/kalpurush.ttf') format('truetype'),
+       url('https://cdn.jsdelivr.net/gh/maateen/kalpurush@master/kalpurush.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -28,7 +29,7 @@
   }
 
   html, body, button, input, select, textarea, .font-mono, code, kbd, samp {
-    font-family: 'Kalpurush', 'Hind Siliguri', 'Noto Sans Bengali', sans-serif !important;
+    font-family: 'Kalpurush', 'Hind Siliguri', 'Anek Bangla', 'Noto Sans Bengali', sans-serif !important;
     @apply selection:bg-emerald-500 selection:text-white leading-relaxed;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
