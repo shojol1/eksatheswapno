@@ -119,7 +119,7 @@ export default function Members() {
                   <p className="text-xs text-slate-400 font-mono">{toBengaliDigits(member.phone)}</p>
                 </div>
                 <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bengali">
-                  {member.position ? `পজিশন: ${toBengaliDigits(member.position)}` : 'সদস্য'}
+                  সদস্য
                 </span>
               </div>
 
