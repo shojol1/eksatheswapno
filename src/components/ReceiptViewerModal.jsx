@@ -20,7 +20,7 @@ export default function ReceiptViewerModal({
 
   const containerRef = useRef(null);
 
-  // Reset zoom & position when image changes
+  // Reset states when src changes
   useEffect(() => {
     setLoaded(false);
     setZoom(1);
@@ -29,8 +29,12 @@ export default function ReceiptViewerModal({
     setIsDragging(false);
 
     if (src) {
-      const timer = setTimeout(() => setLoaded(true), 400);
-      return () => clearTimeout(timer);
+      const img = new Image();
+      img.src = src;
+      // Only set loaded to true if the image is already completely downloaded and ready in cache
+      if (img.complete && img.naturalWidth !== 0) {
+        setLoaded(true);
+      }
     }
   }, [src]);
 
@@ -53,7 +57,7 @@ export default function ReceiptViewerModal({
 
   // Mouse drag events
   const handleMouseDown = (e) => {
-    if (e.button !== 0) return; // Only primary click
+    if (e.button !== 0) return;
     e.preventDefault();
     setIsDragging(true);
     setDragStart({
@@ -119,35 +123,35 @@ export default function ReceiptViewerModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md font-bengali animate-in fade-in duration-200 select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-md font-bengali animate-in fade-in duration-200 select-none"
       onClick={onClose}
     >
       <div 
-        className="glass-card rounded-3xl border border-slate-800 max-w-3xl w-full flex flex-col max-h-[90vh] overflow-hidden shadow-2xl relative"
+        className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-3xl w-full flex flex-col max-h-[90vh] overflow-hidden shadow-2xl relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/95 z-30">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/95 z-30">
           <div className="flex items-center space-x-2">
-            <ImageIcon className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-sm font-bold text-white truncate max-w-[180px] sm:max-w-xs font-bengali">
+            <ImageIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[180px] sm:max-w-xs font-bengali">
               {title}
             </h3>
           </div>
 
           {/* Zoom & Controls Bar */}
-          <div className="flex items-center space-x-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+          <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={handleZoomOut}
               disabled={zoom <= 0.5}
-              className="p-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               title="ছোট করুন (Zoom Out)"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
 
-            <span className="text-xs font-mono font-bold text-emerald-400 px-1 min-w-[45px] text-center">
+            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 px-1 min-w-[45px] text-center">
               {toBengaliDigits(Math.round(zoom * 100))}%
             </span>
 
@@ -155,18 +159,18 @@ export default function ReceiptViewerModal({
               type="button"
               onClick={handleZoomIn}
               disabled={zoom >= 3.5}
-              className="p-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               title="বড় করুন (Zoom In)"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
 
-            <div className="w-px h-4 bg-slate-800 mx-1" />
+            <div className="w-px h-4 bg-slate-300 dark:bg-slate-800 mx-1" />
 
             <button
               type="button"
               onClick={handleRotate}
-              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               title="ঘোরান (Rotate)"
             >
               <RotateCw className="w-4 h-4" />
@@ -175,7 +179,7 @@ export default function ReceiptViewerModal({
             <button
               type="button"
               onClick={handleReset}
-              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               title="রিসেট (Reset)"
             >
               <RotateCcw className="w-4 h-4" />
@@ -186,13 +190,13 @@ export default function ReceiptViewerModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-2"
+            className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors ml-2"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body Container with Drag-Pan & Loading Spinner */}
+        {/* Modal Body Container with Drag-Pan & High-Contrast Light/Dark Loading Spinner */}
         <div 
           ref={containerRef}
           onWheel={handleWheel}
@@ -203,20 +207,20 @@ export default function ReceiptViewerModal({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="relative flex-1 overflow-hidden p-4 bg-slate-950 flex items-center justify-center min-h-[360px] touch-none"
+          className="relative flex-1 overflow-hidden p-4 bg-slate-100/90 dark:bg-slate-950 flex items-center justify-center min-h-[360px] touch-none"
           style={{ cursor: isDragging ? 'grabbing' : zoom > 1 ? 'grab' : 'default' }}
         >
           
-          {/* Loading Spinner & Skeleton Overlay */}
+          {/* High-Contrast Loading Spinner & Skeleton Overlay */}
           {!loaded && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md space-y-4">
-              <div className="w-12 h-12 rounded-full border-4 border-slate-800 border-t-emerald-400 border-r-emerald-400 animate-spin shadow-lg shadow-emerald-500/20" />
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-950/95 backdrop-blur-md space-y-4">
+              <div className="w-12 h-12 rounded-full border-4 border-emerald-200 dark:border-slate-800 border-t-emerald-600 dark:border-t-emerald-400 border-r-emerald-600 dark:border-r-emerald-400 animate-spin shadow-lg shadow-emerald-500/20" />
               <div className="text-center space-y-1 font-bengali">
-                <p className="text-sm font-bold text-white tracking-wide">
-                  রসিদের ছবি লোড হচ্ছে...
+                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-wide">
+                  রসিদের পূর্ণাঙ্গ ছবি লোড হচ্ছে...
                 </p>
-                <p className="text-xs text-slate-400 animate-pulse">
-                  দয়া করে কিছুক্ষণ অপেক্ষা করুন
+                <p className="text-xs text-emerald-700 dark:text-slate-400 font-semibold animate-pulse">
+                  ছবি সম্পূর্ণ লোড হওয়া পর্যন্ত অপেক্ষা করুন
                 </p>
               </div>
             </div>
@@ -224,8 +228,8 @@ export default function ReceiptViewerModal({
 
           {/* Pan Indicator Hint when Zoomed */}
           {loaded && (zoom > 1 || position.x !== 0 || position.y !== 0) && (
-            <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-[10px] font-semibold text-emerald-400 flex items-center space-x-1.5 pointer-events-none backdrop-blur-sm">
-              <Move className="w-3 h-3 text-emerald-400 animate-pulse" />
+            <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-lg bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1.5 pointer-events-none backdrop-blur-sm shadow-sm">
+              <Move className="w-3 h-3 text-emerald-600 dark:text-emerald-400 animate-pulse" />
               <span>মাউস বা আঙুল দিয়ে টেনে ছবি প্যান (Pan) করুন</span>
             </div>
           )}
@@ -241,7 +245,7 @@ export default function ReceiptViewerModal({
               src={src}
               alt={title}
               draggable={false}
-              onLoad={() => setTimeout(() => setLoaded(true), 300)}
+              onLoad={() => setLoaded(true)}
               onError={() => setLoaded(true)}
               className={`max-w-full max-h-[68vh] object-contain rounded-xl shadow-2xl transition-opacity duration-300 pointer-events-none ${
                 loaded ? 'opacity-100' : 'opacity-0'
@@ -250,9 +254,9 @@ export default function ReceiptViewerModal({
           </div>
         </div>
 
-        {/* Modal Footer with Actions for Pending Approvals */}
-        <div className="p-3.5 bg-slate-900/95 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 font-bengali">
-          <p className="text-[11px] text-slate-400 text-center sm:text-left">
+        {/* Modal Footer with Actions */}
+        <div className="p-3.5 bg-slate-50 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 font-bengali">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center sm:text-left">
             ছবি জুম করার পর মাউস বা আঙুল দিয়ে টেনে (Pan) রসিদের যেকোনো অংশ স্পষ্ট দেখতে পারবেন।
           </p>
 
@@ -265,9 +269,9 @@ export default function ReceiptViewerModal({
                     onReject();
                     onClose();
                   }}
-                  className="flex-1 sm:flex-none px-4 py-2 bg-slate-800 hover:bg-rose-950 hover:text-rose-400 border border-slate-700 hover:border-rose-800 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all"
+                  className="flex-1 sm:flex-none px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-rose-700 dark:text-rose-400 border border-slate-300 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-800 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all"
                 >
-                  <XCircle className="w-4 h-4 text-rose-400" />
+                  <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   <span>{rejectText}</span>
                 </button>
               )}

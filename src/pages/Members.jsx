@@ -24,6 +24,12 @@ export default function Members() {
     (m.phone || '').includes(searchTerm)
   );
 
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
+    const posA = a.position !== undefined && a.position !== null && a.position !== '' ? Number(a.position) : 99999;
+    const posB = b.position !== undefined && b.position !== null && b.position !== '' ? Number(b.position) : 99999;
+    return posA - posB;
+  });
+
   // Helper to match and filter member's collections
   const getMemberCollections = (member) => {
     if (!member) return [];
@@ -96,7 +102,7 @@ export default function Members() {
 
       {/* Members Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredMembers.map((member) => {
+        {sortedMembers.map((member) => {
           const totalPaid = getMemberTotalPaid(member);
           return (
             <div 
@@ -113,7 +119,7 @@ export default function Members() {
                   <p className="text-xs text-slate-400 font-mono">{toBengaliDigits(member.phone)}</p>
                 </div>
                 <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bengali">
-                  সদস্য
+                  {member.position ? `পজিশন: ${toBengaliDigits(member.position)}` : 'সদস্য'}
                 </span>
               </div>
 

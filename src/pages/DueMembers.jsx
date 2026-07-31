@@ -145,6 +145,13 @@ export default function DueMembers() {
     return !isPaidById && !isPaidByName;
   });
 
+  // Sort due members list by position ascending (1, 2, 3...)
+  dueMembersList.sort((a, b) => {
+    const posA = a.position !== undefined && a.position !== null && a.position !== '' ? Number(a.position) : 99999;
+    const posB = b.position !== undefined && b.position !== null && b.position !== '' ? Number(b.position) : 99999;
+    return posA - posB;
+  });
+
   return (
     <div className="space-y-6 font-bengali">
       

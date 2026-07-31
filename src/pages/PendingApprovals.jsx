@@ -23,6 +23,27 @@ export default function PendingApprovals() {
     return 'আজ';
   };
 
+  const getMemberPosition = (item) => {
+    if (item.position !== undefined && item.position !== null && item.position !== '') {
+      return Number(item.position);
+    }
+    const mId = String(item.userId || item.memberId || item.uid || '');
+    const mName = String(item.memberName || '').trim().toLowerCase();
+    const found = members.find(m => 
+      (mId && (m.id === mId || m.uid === mId)) || 
+      (mName && m.name && m.name.trim().toLowerCase() === mName)
+    );
+    return found && found.position !== undefined && found.position !== null && found.position !== '' 
+      ? Number(found.position) 
+      : 99999;
+  };
+
+  const sortedPendingItems = [...pendingItems].sort((a, b) => {
+    const posA = getMemberPosition(a);
+    const posB = getMemberPosition(b);
+    return posA - posB;
+  });
+
   if (currentUser?.role !== 'admin') {
     return (
       <div className="glass-card p-8 rounded-3xl border border-slate-800 text-center max-w-lg mx-auto space-y-4">
@@ -59,7 +80,7 @@ export default function PendingApprovals() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pendingItems.map((item) => {
+          {sortedPendingItems.map((item) => {
             const name = getMemberName(item);
             const dateStr = getFormatDate(item);
             const hasReceipt = Boolean(item.receiptUrl);

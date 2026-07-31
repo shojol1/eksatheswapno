@@ -127,6 +127,12 @@ export const AuthProvider = ({ children }) => {
     // Listen to "users" collection for members list
     const unsubMembers = onSnapshot(collection(db, 'users'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort members by position ascending (position 1 comes first)
+      data.sort((a, b) => {
+        const posA = a.position !== undefined && a.position !== null && a.position !== '' ? Number(a.position) : 99999;
+        const posB = b.position !== undefined && b.position !== null && b.position !== '' ? Number(b.position) : 99999;
+        return posA - posB;
+      });
       setMembers(data);
     }, (err) => console.error('Members listener error:', err));
 

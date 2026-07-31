@@ -120,8 +120,17 @@ export default function Dashboard() {
   const dueCount = generalMembers.filter(m => !isPaid(m)).length;
   const estimatedDueAmount = dueCount * 5000; // monthly installment 5000 BDT per member
 
+  const getMemberName = (item) => {
+    if (item.memberName) return item.memberName;
+    if (item.name) return item.name;
+    const found = members.find(m => m.id === item.userId || m.uid === item.userId || m.id === item.memberId);
+    return found ? found.name : (currentUser?.name || 'সদস্য');
+  };
+
   return (
     <div className="space-y-6">
+      {/* Rest of Dashboard code */}
+
       
       {/* Top Banner / Welcome Header */}
       <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
@@ -343,9 +352,11 @@ export default function Dashboard() {
                     {item.status === 'approved' ? <CheckCircle2 className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white font-bengali">{item.memberName}</p>
+                    <p className="text-sm font-bold text-white font-bengali">{getMemberName(item)}</p>
                     <p className="text-xs text-slate-400 font-bengali">
-                      {item.month} {item.year} • {item.method} ({item.date})
+                      {item.month ? `${item.month} ` : ''}{toBengaliDigits(item.year)}
+                      {item.method ? ` • ${item.method}` : ''}
+                      {item.date ? ` (${toBengaliDigits(item.date)})` : ''}
                     </p>
                   </div>
                 </div>

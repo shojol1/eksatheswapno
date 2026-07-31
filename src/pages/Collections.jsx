@@ -82,6 +82,27 @@ export default function Collections() {
     return matchesSearch && matchesYear && matchesMonth && matchesStatus;
   });
 
+  const getMemberPosition = (item) => {
+    if (item.position !== undefined && item.position !== null && item.position !== '') {
+      return Number(item.position);
+    }
+    const mId = String(item.userId || item.memberId || item.uid || '');
+    const mName = String(item.memberName || '').trim().toLowerCase();
+    const found = members.find(m => 
+      (mId && (m.id === mId || m.uid === mId)) || 
+      (mName && m.name && m.name.trim().toLowerCase() === mName)
+    );
+    return found && found.position !== undefined && found.position !== null && found.position !== '' 
+      ? Number(found.position) 
+      : 99999;
+  };
+
+  const sortedCollections = [...filteredCollections].sort((a, b) => {
+    const posA = getMemberPosition(a);
+    const posB = getMemberPosition(b);
+    return posA - posB;
+  });
+
   const totalFilteredAmount = filteredCollections
     .filter(c => !c.status || String(c.status).toLowerCase() === 'approved')
     .reduce((sum, c) => sum + Number(c.amount || 0), 0);
@@ -204,8 +225,8 @@ export default function Collections() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-bengali">
-              {filteredCollections.length > 0 ? (
-                filteredCollections.map((item) => {
+              {sortedCollections.length > 0 ? (
+                sortedCollections.map((item) => {
                   const name = getMemberName(item);
                   const dateStr = getFormatDate(item);
                   const methodStr = item.method || (item.paymentType === 'yearly' ? 'বাৎসরিক' : 'মাসিক');
