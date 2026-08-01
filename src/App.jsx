@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Collections from './pages/Collections';
 import AddCollection from './pages/AddCollection';
 import PendingApprovals from './pages/PendingApprovals';
+import PaymentManagement from './pages/PaymentManagement';
 import DueMembers from './pages/DueMembers';
 import Expenses from './pages/Expenses';
 import Profits from './pages/Profits';
@@ -52,6 +53,7 @@ function AppLayout() {
                     <Route path="/collections" element={<Collections />} />
                     <Route path="/add-collection" element={<AddCollection />} />
                     <Route path="/pending" element={<PendingApprovals />} />
+                    <Route path="/payment-management" element={<PaymentManagement />} />
                     <Route path="/due-members" element={<DueMembers />} />
                     <Route path="/expenses" element={<Expenses />} />
                     <Route path="/profits" element={<Profits />} />

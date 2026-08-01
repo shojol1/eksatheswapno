@@ -15,7 +15,8 @@ import {
   Users, 
   Bell, 
   UserCheck, 
-  X
+  X,
+  CreditCard
 } from 'lucide-react';
 
 export default function Sidebar({ mobileOpen, onCloseMobile }) {
@@ -36,6 +37,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
       badge: currentUser?.role === 'admin' && pendingCount > 0 ? pendingCount : null,
       adminOnly: true 
     },
+    { path: '/payment-management', label: 'পেমেন্ট ম্যানেজমেন্ট', icon: CreditCard, adminOnly: true },
     { path: '/due-members', label: 'বকেয়া সদস্য তালিকা', icon: AlertCircle },
     { path: '/expenses', label: 'ব্যয় ও বিনিয়োগ', icon: TrendingDown },
     { path: '/profits', label: 'মুনাফা ও লাভ', icon: TrendingUp },

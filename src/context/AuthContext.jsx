@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { auth, db } from '../firebase';
 import {
@@ -193,6 +193,61 @@ export const AuthProvider = ({ children }) => {
     };
   }, [currentUser]);
 
+  // Ensure every notification document in Firestore has createdAt so Android app orderBy("createdAt") query finds it!
+  useEffect(() => {
+    if (!notifications || notifications.length === 0) return;
+
+    notifications.forEach(async (n) => {
+      if (!n.id || n.createdAt || n.createdAt?.hasPendingWrites) return;
+
+      try {
+        const ref = doc(db, 'notifications', n.id);
+        const updates = {
+          createdAt: n.time?.seconds ? n.time : serverTimestamp(),
+          body: n.body || n.message || '',
+          message: n.message || n.body || '',
+          amount: Math.round(Number(n.amount || 0))
+        };
+        await updateDoc(ref, updates);
+      } catch (err) {
+        console.error('Error backfilling createdAt on notification doc:', err);
+      }
+    });
+  }, [notifications]);
+
+  // Deduplicate multicast notifications in Firestore database so Android & Web see exactly 1 notification per event
+  useEffect(() => {
+    if (!currentUser || !notifications || notifications.length < 2) return;
+
+    const seenKeys = new Map();
+    const duplicateIdsToDelete = [];
+
+    notifications.forEach(n => {
+      const title = (n.title || '').trim();
+      const body = (n.body || n.message || n.reason || n.comment || '').trim();
+      if (!body) return;
+
+      // Group by title & body message to collapse multicast user copies
+      const key = `${n.type || 'general'}_${title}_${body}`;
+
+      if (seenKeys.has(key)) {
+        duplicateIdsToDelete.push(n.id);
+      } else {
+        seenKeys.set(key, n.id);
+      }
+    });
+
+    if (duplicateIdsToDelete.length > 0) {
+      duplicateIdsToDelete.forEach(async (id) => {
+        try {
+          await deleteDoc(doc(db, 'notifications', id));
+        } catch (err) {
+          console.error('Error deleting duplicate notification:', err);
+        }
+      });
+    }
+  }, [currentUser, notifications?.length]);
+
   // ──────────────────────────────────────────────
   // 3. Auth Methods (Firebase)
   // ──────────────────────────────────────────────
@@ -209,12 +264,13 @@ export const AuthProvider = ({ children }) => {
         const data = userDoc.data();
         setUserProfile({
           uid: user.uid,
-          name: data.name || user.displayName || 'ব্যবহারকারী',
-          email: user.email,
+          name: data.name || user.displayName || user.email,
+          email: data.email || user.email,
           role: data.role || 'member',
           phone: data.phone || '',
           address: data.address || '',
-          profileImage: data.profileImage || ''
+          profileImage: data.profileImage || '',
+          ...data
         });
       } else {
         setUserProfile({
@@ -229,17 +285,8 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Error fetching user profile during login:', err);
-      setUserProfile({
-        uid: user.uid,
-        name: user.email,
-        email: user.email,
-        role: 'member',
-        phone: '',
-        address: '',
-        profileImage: ''
-      });
     }
-    return user;
+    return result;
   };
 
   const logout = async () => {
@@ -248,79 +295,59 @@ export const AuthProvider = ({ children }) => {
     setUserProfile(null);
   };
 
-  const updateUserProfile = async (updatedData) => {
-    if (!currentUser?.uid) return;
+  const updateUserProfile = async (updates) => {
+    if (!currentUser) return;
     const userRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userRef, updatedData);
-    setUserProfile(prev => ({ ...prev, ...updatedData }));
+    await updateDoc(userRef, updates);
+    setUserProfile(prev => ({ ...prev, ...updates }));
   };
 
   // ──────────────────────────────────────────────
-  // 4. Collection Actions (Firestore)
+  // 4. Collection / Payment Actions
   // ──────────────────────────────────────────────
   const addCollection = async (newCollection) => {
+    const mUid = newCollection.userId || currentUser?.uid;
+    const foundMember = members.find(m => m.id === mUid || m.uid === mUid);
+    const mName = foundMember?.name || newCollection.memberName || userProfile?.name || 'সদস্য';
+    const amountNum = Math.round(Number(newCollection.amount || 0));
+
     const item = {
-      ...newCollection,
-      userId: newCollection.userId || newCollection.memberId || userProfile?.uid,
-      amount: Number(newCollection.amount),
-      status: newCollection.status || 'pending', // Always pending by default to require approval
+      userId: mUid,
+      memberName: mName,
+      amount: amountNum,
+      year: String(newCollection.year || '2026'),
+      month: newCollection.month || null,
+      paymentType: newCollection.paymentType || (newCollection.month ? 'monthly' : 'yearly'),
+      status: newCollection.status || 'pending',
+      receiptUrl: newCollection.receiptUrl || '',
+      time: Date.now(),
       date: newCollection.date || new Date().toISOString().split('T')[0],
+      timestamp: serverTimestamp(),
       createdAt: serverTimestamp(),
       addedBy: userProfile?.uid || ''
     };
-    await addDoc(collection(db, 'collections'), item);
 
-    // Save notification to Firestore "notifications" collection (for Android app & Web sync)
-    try {
-      await addDoc(collection(db, 'notifications'), {
-        title: 'নতুন জমা অনুরোধ',
-        body: `${item.memberName || 'সদস্য'} এর ${item.month ? item.month + ' ' : ''}${item.year || ''} বাবদ ৳ ${item.amount} টাকা জমা অনুরোধ করা হয়েছে`,
-        type: 'collection',
-        userId: item.userId || '',
-        month: item.month || '',
-        year: item.year || '',
-        amount: Number(item.amount),
-        createdAt: serverTimestamp()
-      });
-    } catch (err) {
-      console.error('Error writing collection notification:', err);
-    }
+    await addDoc(collection(db, 'collections'), item);
   };
 
   const approveCollection = async (id) => {
     const ref = doc(db, 'collections', id);
-    await updateDoc(ref, { status: 'approved' });
-
-    // Save approval notification to Firestore "notifications" collection
-    try {
-      const target = collections.find(c => c.id === id);
-      if (target) {
-        await addDoc(collection(db, 'notifications'), {
-          title: 'পেমেন্ট অনুমোদিত',
-          body: `${target.memberName || 'সদস্য'} এর ${target.month ? target.month + ' ' : ''}${target.year || ''} এর ৳ ${target.amount || 0} টাকা সফলভাবে অনুমোদন করা হয়েছে।`,
-          type: 'approved',
-          userId: target.userId || target.memberId || '',
-          month: target.month || '',
-          year: target.year || '',
-          amount: Number(target.amount || 0),
-          createdAt: serverTimestamp()
-        });
-      } else {
-        await addDoc(collection(db, 'notifications'), {
-          title: 'পেমেন্ট অনুমোদিত',
-          body: 'একটি জমার অনুরোধ সফলভাবে অনুমোদন করা হয়েছে।',
-          type: 'approved',
-          createdAt: serverTimestamp()
-        });
-      }
-    } catch (err) {
-      console.error('Error writing approval notification:', err);
-    }
+    const updates = { 
+      status: 'approved',
+      approvedAt: Date.now(),
+      approvedBy: userProfile?.uid || currentUser?.uid || ''
+    };
+    await updateDoc(ref, updates);
   };
 
   const rejectCollection = async (id) => {
     const ref = doc(db, 'collections', id);
     await deleteDoc(ref);
+  };
+
+  const updateCollection = async (id, updatedData) => {
+    const ref = doc(db, 'collections', id);
+    await updateDoc(ref, updatedData);
   };
 
   const deleteCollection = async (id) => {
@@ -491,6 +518,26 @@ export const AuthProvider = ({ children }) => {
     return <LoadingSpinner text="তথ্য লোড হচ্ছে..." fullScreen={true} />;
   }
 
+  const updateNotification = async (id, updatedData) => {
+    if (!id) return;
+    try {
+      const ref = doc(db, 'notifications', id);
+      await updateDoc(ref, updatedData);
+    } catch (err) {
+      console.error('Error updating notification:', err);
+    }
+  };
+
+  const deleteNotification = async (id) => {
+    if (!id) return;
+    try {
+      const ref = doc(db, 'notifications', id);
+      await deleteDoc(ref);
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       currentUser: effectiveUser,
@@ -502,6 +549,7 @@ export const AuthProvider = ({ children }) => {
       addCollection,
       approveCollection,
       rejectCollection,
+      updateCollection,
       deleteCollection,
       members,
       addMember,
@@ -522,6 +570,8 @@ export const AuthProvider = ({ children }) => {
       updateProfit,
       deleteProfit,
       notifications,
+      updateNotification,
+      deleteNotification,
       bank,
       lang,
       setLang

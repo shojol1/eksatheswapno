@@ -72,9 +72,7 @@ export default function Navbar({ onOpenMobileMenu }) {
           >
             <Bell className="w-5 h-5" />
             {(notifications?.length > 0 || (currentUser?.role === 'admin' && pendingCount > 0)) && (
-              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white animate-pulse">
-                {toBengaliDigits(currentUser?.role === 'admin' ? (pendingCount + (notifications?.length || 0)) : notifications?.length)}
-              </span>
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse ring-2 ring-slate-900" />
             )}
           </button>
 
