@@ -122,15 +122,13 @@ export default function Collections() {
           </p>
         </div>
 
-        {currentUser?.role !== 'admin' && (
-          <button
-            onClick={() => navigate('/add-collection')}
-            className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all font-bengali self-start sm:self-auto"
-          >
-            <PlusCircle className="w-5 h-5" />
-            <span>নতুন জমা এন্ট্রি</span>
-          </button>
-        )}
+        <button
+          onClick={() => navigate('/add-collection')}
+          className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all font-bengali self-start sm:self-auto"
+        >
+          <PlusCircle className="w-5 h-5" />
+          <span>নতুন জমা এন্ট্রি</span>
+        </button>
       </div>
 
       {/* Filter & Search Bar */}

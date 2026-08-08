@@ -388,9 +388,11 @@ export const AuthProvider = ({ children }) => {
       await addDoc(collection(db, 'notifications'), {
         title: 'নতুন বিনিয়োগ',
         body: `${data.title || 'খাত'} খাতে ${data.amount} টাকা বিনিয়োগ করা হয়েছে`,
+        message: `${data.title || 'খাত'} খাতে ${data.amount} টাকা বিনিয়োগ করা হয়েছে`,
         type: 'investment',
         amount: Number(data.amount),
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        time: serverTimestamp()
       });
     } catch (e) {
       console.error('Notification write error:', e);
@@ -416,9 +418,11 @@ export const AuthProvider = ({ children }) => {
       await addDoc(collection(db, 'notifications'), {
         title: 'ব্যাংক চার্জ',
         body: `${data.amount} টাকা ব্যাংক চার্জ কেটে নেয়া হয়েছে`,
+        message: `${data.amount} টাকা ব্যাংক চার্জ কেটে নেয়া হয়েছে`,
         type: 'bank_charge',
         amount: Number(data.amount),
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        time: serverTimestamp()
       });
     } catch (e) {
       console.error('Notification write error:', e);
@@ -444,9 +448,11 @@ export const AuthProvider = ({ children }) => {
       await addDoc(collection(db, 'notifications'), {
         title: 'ডিপিএস জমা',
         body: `${data.year || ''} সালের ${data.month || ''} মাসের DPS বাবদ ${data.amount} টাকা জমা করা হয়েছে`,
+        message: `${data.year || ''} সালের ${data.month || ''} মাসের DPS বাবদ ${data.amount} টাকা জমা করা হয়েছে`,
         type: 'dps',
         amount: Number(data.amount),
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        time: serverTimestamp()
       });
     } catch (e) {
       console.error('Notification write error:', e);

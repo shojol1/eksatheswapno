@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, ArrowLeft, CheckCircle2, Wallet, Upload, X, AlertCircle, FileText, Check, ShieldAlert } from 'lucide-react';
+import { PlusCircle, ArrowLeft, CheckCircle2, Wallet, Upload, X, AlertCircle, Users, User, ShieldCheck } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { toBengaliDigits } from '../utils/bengaliNumbers';
 
 export default function AddCollection() {
-  const { currentUser, collections, addCollection } = useAuth();
+  const { currentUser, collections, members, addCollection } = useAuth();
   const navigate = useNavigate();
+
+  const isAdmin = currentUser?.role === 'admin';
 
   const monthsList = [
     "January", "February", "March", "April", "May", "June",
@@ -14,24 +19,43 @@ export default function AddCollection() {
   ];
   const currentYear = new Date().getFullYear().toString();
 
+  const [selectedMemberId, setSelectedMemberId] = useState('');
   const [year, setYear] = useState(currentYear);
   const [month, setMonth] = useState('');
   const [amount, setAmount] = useState('5000');
-  const [note, setNote] = useState('');
   const [receiptUrl, setReceiptUrl] = useState('');
   const [receiptName, setReceiptName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [submittedData, setSubmittedData] = useState(null);
 
-  // Find paid months for current logged in user for selected year
-  const userPaidMonths = new Set(
+  // Initialize selectedMemberId: if admin, set to first member or current user; if regular member, set to currentUser.uid
+  useEffect(() => {
+    if (isAdmin) {
+      if (!selectedMemberId && members && members.length > 0) {
+        setSelectedMemberId(members[0].id || members[0].uid || '');
+      }
+    } else {
+      setSelectedMemberId(currentUser?.uid || '');
+    }
+  }, [members, currentUser, isAdmin]);
+
+  // Target member object selected for payment
+  const targetMember = members.find(m => 
+    (m.id && String(m.id) === String(selectedMemberId)) || 
+    (m.uid && String(m.uid) === String(selectedMemberId))
+  ) || (isAdmin && members.length > 0 ? members[0] : currentUser);
+
+  const targetUid = String(targetMember?.id || targetMember?.uid || selectedMemberId || currentUser?.uid || '');
+  const targetName = String(targetMember?.name || '').trim().toLowerCase();
+
+  // Find paid months for selected target member for selected year
+  const targetPaidMonths = new Set(
     collections
       .filter(c => {
         const uId = String(c.userId || c.memberId || c.uid || c.addedBy || '');
-        const currentUid = String(currentUser?.uid || '');
-        const isUserMatch = (uId && currentUid && uId === currentUid) ||
-          (c.memberName && currentUser?.name && c.memberName.trim().toLowerCase() === currentUser.name.trim().toLowerCase());
+        const isUserMatch = (uId && targetUid && uId === targetUid) ||
+          (c.memberName && targetName && c.memberName.trim().toLowerCase() === targetName);
         
         const isYearMatch = !c.year || String(c.year) === String(year);
         const isApprovedOrPending = !c.status || String(c.status).toLowerCase() === 'approved' || String(c.status).toLowerCase() === 'pending';
@@ -41,29 +65,17 @@ export default function AddCollection() {
       .map(c => String(c.month).trim().toLowerCase())
   );
 
-  // Auto-select the first unpaid month whenever year or user collections change
+  // Auto-select the first unpaid month whenever year, selectedMemberId, or collections change
   useEffect(() => {
-    const firstUnpaid = monthsList.find(m => !userPaidMonths.has(m.toLowerCase()));
+    const firstUnpaid = monthsList.find(m => !targetPaidMonths.has(m.toLowerCase()));
     if (firstUnpaid) {
       setMonth(firstUnpaid);
     } else {
       setMonth(''); // All 12 months paid for this year
     }
-  }, [year, collections, currentUser]);
+  }, [year, selectedMemberId, collections, currentUser]);
 
-  if (currentUser?.role === 'admin') {
-    return (
-      <div className="glass-card p-8 rounded-3xl border border-slate-800 text-center max-w-lg mx-auto space-y-4 font-bengali">
-        <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto" />
-        <h2 className="text-xl font-bold text-white font-bengali">এক্সেস সংরক্ষিত</h2>
-        <p className="text-sm text-slate-400 font-bengali">
-          নতুন জমা সেকশনটি শুধুমাত্র সাধারণ সদস্যদের জন্য তৈরি। অ্যাডমিনগণ পেন্ডিং অ্যাপ্রুভাল বা ড্যাশবোর্ড ব্যবহার করতে পারেন।
-        </p>
-      </div>
-    );
-  }
-
-  // Handle receipt image file selection (max 2MB limit)
+  // Handle receipt image file selection with canvas compression (prevents Firestore 1MB doc size limit overflow)
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -75,9 +87,38 @@ export default function AddCollection() {
       }
 
       setReceiptName(file.name);
+
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setReceiptUrl(reader.result);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setReceiptUrl(compressedDataUrl);
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -98,23 +139,70 @@ export default function AddCollection() {
 
     setIsSubmitting(true);
 
-    const newCollectionItem = {
-      userId: currentUser?.uid || '',
-      memberId: currentUser?.uid || '',
-      memberName: currentUser?.name || currentUser?.email || 'সদস্য',
-      amount: Number(amount),
-      year,
-      month,
-      receiptUrl: receiptUrl || '',
-      status: currentUser?.role === 'admin' ? 'approved' : 'pending',
-      date: new Date().toISOString().split('T')[0]
-    };
+    try {
+      const mUid = targetUid || currentUser?.uid || '';
+      const mName = targetMember?.name || targetMember?.email || currentUser?.name || 'সদস্য';
+      const amountNum = Math.round(Number(amount));
 
-    await addCollection(newCollectionItem);
+      const newCollectionItem = {
+        userId: mUid,
+        memberId: mUid,
+        memberName: mName,
+        amount: amountNum,
+        year: String(year),
+        month: String(month),
+        paymentType: 'monthly',
+        receiptUrl: receiptUrl || '',
+        status: isAdmin ? 'approved' : 'pending',
+        date: new Date().toISOString().split('T')[0],
+        addedBy: currentUser?.uid || '',
+        addedByAdmin: isAdmin,
+        skipFunctionNotification: isAdmin
+      };
 
-    setSubmittedData(newCollectionItem);
-    setIsSubmitting(false);
-    setShowSuccessDialog(true);
+      await addCollection(newCollectionItem);
+
+      // If Admin deposits on behalf of a member, write notification to Firestore database
+      if (isAdmin) {
+        try {
+          const rawAdminName = currentUser?.name?.trim() || '';
+          const isGenericAdminName = !rawAdminName || rawAdminName.toLowerCase() === 'admin' || rawAdminName.toLowerCase() === 'অ্যাডমিন';
+          const adminDisplayName = isGenericAdminName ? '' : rawAdminName;
+
+          const notifMsg = adminDisplayName
+            ? `অ্যাডমিন ${adminDisplayName} ${mName} এর ${month} ${toBengaliDigits(year)} মাসের ${amountNum.toLocaleString('bn-BD')} টাকা জমা করেছেন`
+            : `অ্যাডমিন ${mName} এর ${month} ${toBengaliDigits(year)} মাসের ${amountNum.toLocaleString('bn-BD')} টাকা জমা করেছেন`;
+          
+          await addDoc(collection(db, 'notifications'), {
+            title: 'অ্যাডমিন টাকা জমা করেছেন',
+            body: notifMsg,
+            message: notifMsg,
+            type: 'approved',
+            amount: amountNum,
+            userId: mUid,
+            memberName: mName,
+            month: String(month),
+            year: String(year),
+            createdAt: serverTimestamp(),
+            time: serverTimestamp()
+          });
+        } catch (notifErr) {
+          console.warn('Could not write notification document:', notifErr);
+        }
+      }
+
+      setSubmittedData(newCollectionItem);
+      setShowSuccessDialog(true);
+    } catch (err) {
+      console.error('Error submitting collection:', err);
+      if (err.code === 'permission-denied' || (err.message && err.message.includes('permission'))) {
+        alert('⚠️ ফায়ারবেস সিকিউরিটি রুলস (Rules) দ্বারা অনুমতি পাওয়া যায়নি (Missing or insufficient permissions)। অনুগ্রহ করে ফায়ারবেস কনসোলে Rules পেজে অনুমতি দিন।');
+      } else {
+        alert('জমা এন্ট্রি সংরক্ষণ করতে সমস্যা হয়েছে: ' + (err.message || 'সাময়িক সমস্যা, আবার চেষ্টা করুন।'));
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleResetForm = () => {
@@ -137,29 +225,82 @@ export default function AddCollection() {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-white font-bengali">
-            নতুন কালেকশন জমা দিন
+            {isAdmin ? 'সঞ্চয় কালেকশন জমা দিন (অ্যাডমিন প্যানেল)' : 'নতুন কালেকশন জমা দিন'}
           </h1>
           <p className="text-xs text-slate-400 font-bengali mt-0.5">
-            সমিতির ৫,০০০ টাকা সঞ্চয় জমা এন্ট্রি করুন
+            {isAdmin ? 'সদস্যের পক্ষ থেকে সঞ্চয় টাকা জমা দিন' : 'সমিতির ৫,০০০ টাকা সঞ্চয় জমা এন্ট্রি করুন'}
           </p>
         </div>
       </div>
 
-      {/* Logged in User Card */}
-      <div className="glass-card p-4 rounded-2xl border border-emerald-500/30 flex items-center justify-between font-bengali">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
-            {(currentUser?.name || 'S')[0].toUpperCase()}
+      {/* Member Selection Header Card */}
+      {isAdmin ? (
+        <div className="glass-card p-5 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 space-y-3 font-bengali shadow-lg">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-emerald-400 flex items-center space-x-2">
+              <Users className="w-4 h-4" />
+              <span>সদস্য নির্বাচন করুন (মেম্বার লিস্ট) *</span>
+            </label>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1">
+              <ShieldCheck className="w-3 h-3" />
+              <span>অ্যাডমিন এন্ট্রি</span>
+            </span>
           </div>
-          <div>
-            <span className="text-[11px] text-emerald-400 font-semibold block">জমাদানকারী সদস্য</span>
-            <h3 className="text-sm font-bold text-white">{currentUser?.name || currentUser?.email}</h3>
-          </div>
+
+          <select
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+            className="w-full px-4 py-3 bg-slate-900 border border-emerald-500/50 rounded-xl text-white text-sm font-semibold focus:outline-none focus:border-emerald-400 cursor-pointer shadow-inner"
+          >
+            {members.map((m, idx) => {
+              const mId = m.id || m.uid;
+              const posStr = m.position !== undefined && m.position !== null && m.position !== '' ? `পজিশন ${toBengaliDigits(m.position)} - ` : '';
+              return (
+                <option key={mId || idx} value={mId} className="bg-slate-900 text-white">
+                  {posStr}{m.name} ({m.phone || m.email || 'সদস্য'})
+                </option>
+              );
+            })}
+          </select>
+
+          {targetMember && (
+            <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                  {(targetMember.name || 'M')[0].toUpperCase()}
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">নির্বাচিত সদস্য</span>
+                  <span className="text-white font-bold">{targetMember.name}</span>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono text-emerald-400 font-semibold">
+                {targetMember.phone || targetMember.email}
+              </span>
+            </div>
+          )}
+
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            💡 অ্যাডমিন হিসেবে আপনি যেকোনো সদস্যের সঞ্চয় জমা দিতে পারেন। সদস্য পরিবর্তন করলে তার সর্বশেষ পরিশোধিত মাস অনুযায়ী পরবর্তী বকেয়া মাস স্বয়ংক্রিয়ভাবে সিলেক্ট হয়ে যাবে।
+          </p>
         </div>
-        <span className="px-3 py-1 bg-slate-900 text-xs text-slate-400 rounded-full border border-slate-800 font-mono">
-          {currentUser?.email}
-        </span>
-      </div>
+      ) : (
+        /* Logged in User Card for General Member */
+        <div className="glass-card p-4 rounded-2xl border border-emerald-500/30 flex items-center justify-between font-bengali">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
+              {(currentUser?.name || 'S')[0].toUpperCase()}
+            </div>
+            <div>
+              <span className="text-[11px] text-emerald-400 font-semibold block">জমাদানকারী সদস্য</span>
+              <h3 className="text-sm font-bold text-white">{currentUser?.name || currentUser?.email}</h3>
+            </div>
+          </div>
+          <span className="px-3 py-1 bg-slate-900 text-xs text-slate-400 rounded-full border border-slate-800 font-mono">
+            {currentUser?.email}
+          </span>
+        </div>
+      )}
 
       {/* Form Card */}
       <div className="glass-card p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl">
@@ -186,7 +327,7 @@ export default function AddCollection() {
               </select>
             </div>
 
-            {/* Month Selector (Paid months are hidden) */}
+            {/* Month Selector (Paid months are hidden for selected member) */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 মাস নির্বাচন করুন (বকেয়া মাসসমূহ) *
@@ -201,8 +342,8 @@ export default function AddCollection() {
                   <option value="" disabled>সকল মাসের টাকা পরিশোধিত</option>
                 )}
                 {monthsList.map(m => {
-                  const isPaidForThisMonth = userPaidMonths.has(m.toLowerCase());
-                  if (isPaidForThisMonth) return null; // Hide already paid months
+                  const isPaidForThisMonth = targetPaidMonths.has(m.toLowerCase());
+                  if (isPaidForThisMonth) return null; // Hide already paid months for target member
                   return (
                     <option key={m} value={m}>
                       {m}
@@ -213,7 +354,7 @@ export default function AddCollection() {
               {month === '' && (
                 <p className="text-[11px] text-rose-400 mt-1 flex items-center space-x-1">
                   <AlertCircle className="w-3.5 h-3.5" />
-                  <span>{year} সালের সকল মাসের টাকা পরিশোধ করা হয়েছে।</span>
+                  <span>{targetMember?.name || 'এই সদস্যের'} {year} সালের সকল মাসের টাকা পরিশোধ করা হয়েছে।</span>
                 </p>
               )}
             </div>
@@ -243,7 +384,7 @@ export default function AddCollection() {
           {/* Receipt File Picker */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              পেমেন্ট রসিদের ছবি (Choose File) *
+              পেমেন্ট রসিদের ছবি (Choose File) {isAdmin ? '(ঐচ্ছিক)' : '*'}
             </label>
             
             <input
@@ -290,8 +431,8 @@ export default function AddCollection() {
 
           {/* Status Note */}
           <p className="text-xs text-slate-400 italic">
-            {currentUser?.role === 'admin' 
-              ? '💡 অ্যাডমিন হিসেবে জমা দেওয়ায় এটি সরাসরি অনুমোদিত (Approved) হিসেবে যুক্ত হবে।'
+            {isAdmin 
+              ? '💡 অ্যাডমিন হিসেবে জমা দেওয়ায় এটি সরাসরি অনুমোদিত (Approved) হিসেবে যুক্ত হবে এবং নোটিফিকেশন সেন্টারে প্রকাশিত হবে।'
               : '💡 সদস্য হিসেবে জমা দেওয়ায় এটি অ্যাডমিন অনুমোদনের (Pending) অপেক্ষায় থাকবে।'}
           </p>
 
@@ -304,13 +445,13 @@ export default function AddCollection() {
             }`}
           >
             <PlusCircle className="w-5 h-5" />
-            <span>{isSubmitting ? 'প্রসেসিং হচ্ছে...' : 'জমা অনুরোধ পাঠান'}</span>
+            <span>{isSubmitting ? 'প্রসেসিং হচ্ছে...' : (isAdmin ? `${targetMember?.name || 'সদস্যের'} টাকা জমা দিন` : 'জমা অনুরোধ পাঠান')}</span>
           </button>
 
         </form>
       </div>
 
-      {/* Success Dialog Modal (Matching Android App AddCollectionActivity.java) */}
+      {/* Success Dialog Modal */}
       {showSuccessDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
           <div className="glass-card p-6 sm:p-8 rounded-3xl border border-emerald-500/40 w-full max-w-md space-y-6 text-center font-bengali relative animate-in fade-in zoom-in duration-200">
@@ -323,10 +464,12 @@ export default function AddCollection() {
             {/* Dialog Title */}
             <div className="space-y-1">
               <h3 className="text-xl font-extrabold text-white">
-                জমা অনুরোধ পাঠানো হয়েছে!
+                {isAdmin ? 'টাকা সফলভাবে জমা হয়েছে!' : 'জমা অনুরোধ পাঠানো হয়েছে!'}
               </h3>
               <p className="text-xs text-slate-300">
-                আপনার কালেকশন এন্ট্রি সফলভাবে ডাটাবেজে সংরক্ষণ করা হয়েছে।
+                {isAdmin 
+                  ? 'সদস্যের কালেকশন এন্ট্রি সফলভাবে ডাটাবেজে জমা ও অনুমোদিত হয়েছে।'
+                  : 'আপনার কালেকশন এন্ট্রি সফলভাবে ডাটাবেজে সংরক্ষণ করা হয়েছে।'}
               </p>
             </div>
 
@@ -347,7 +490,7 @@ export default function AddCollection() {
                 </div>
                 <div className="flex justify-between pt-0.5">
                   <span className="text-slate-400">স্ট্যাটাস:</span>
-                  <span className="text-amber-400 font-bold">
+                  <span className="text-emerald-400 font-bold">
                     {submittedData.status === 'approved' ? 'অনুমোদিত (Approved)' : 'পেন্ডিং (অনুমোদনের অপেক্ষায়)'}
                   </span>
                 </div>

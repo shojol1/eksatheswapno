@@ -383,18 +383,16 @@ export default function Dashboard() {
           </h3>
 
           <div className="space-y-2.5">
-            {currentUser?.role !== 'admin' && (
-              <button
-                onClick={() => navigate('/add-collection')}
-                className="w-full p-3.5 rounded-xl glass-emerald font-semibold text-sm flex items-center justify-between transition-all font-bengali group"
-              >
-                <div className="flex items-center space-x-3">
-                  <PlusCircle className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                  <span className="text-emerald-300">নতুন জমা এন্ট্রি দিন</span>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-              </button>
-            )}
+            <button
+              onClick={() => navigate('/add-collection')}
+              className="w-full p-3.5 rounded-xl glass-emerald font-semibold text-sm flex items-center justify-between transition-all font-bengali group"
+            >
+              <div className="flex items-center space-x-3">
+                <PlusCircle className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="text-emerald-300">নতুন জমা এন্ট্রি দিন</span>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+            </button>
 
             <button
               onClick={() => navigate('/expenses')}

@@ -29,7 +29,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
   const navItems = [
     { path: '/', label: 'ড্যাশবোর্ড', icon: LayoutDashboard },
     { path: '/collections', label: 'কালেকশন তালিকা', icon: Wallet },
-    { path: '/add-collection', label: 'নতুন জমা দিন', icon: PlusCircle, memberOnly: true },
+    { path: '/add-collection', label: 'নতুন জমা দিন', icon: PlusCircle },
     { 
       path: '/pending', 
       label: 'পেন্ডিং অ্যাপ্রুভাল', 
