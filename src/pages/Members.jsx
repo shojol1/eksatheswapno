@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Users, PlusCircle, Phone, Search, Shield, User, Wallet, Calendar, CheckCircle2, Clock, Eye, X, FileText } from 'lucide-react';
+import { Users, PlusCircle, Phone, Search, Shield, User, Wallet, Calendar, CheckCircle2, Clock, Eye, X, FileText, Mail, MapPin, Award } from 'lucide-react';
 import ProfileAvatar from '../components/ProfileAvatar';
 import { toBengaliDigits } from '../utils/bengaliNumbers';
 import ReceiptViewerModal from '../components/ReceiptViewerModal';
@@ -21,7 +21,9 @@ export default function Members() {
 
   const filteredMembers = generalMembers.filter(m =>
     (m.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (m.phone || '').includes(searchTerm)
+    (m.phone || '').includes(searchTerm) ||
+    (m.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (m.address || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const sortedMembers = [...filteredMembers].sort((a, b) => {
@@ -93,7 +95,7 @@ export default function Members() {
         <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
         <input
           type="text"
-          placeholder="সদস্যের নাম বা মোবাইল নম্বর..."
+          placeholder="সদস্যের নাম, মোবাইল নম্বর, ইমেইল বা ঠিকানা দিয়ে খুঁজুন..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-bengali"
@@ -113,10 +115,15 @@ export default function Members() {
               <div className="flex items-center space-x-3">
                 <ProfileAvatar src={member.profileImage} name={member.name} sizeClass="w-12 h-12" textClass="text-lg" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-white font-bengali truncate group-hover:text-indigo-300 transition-colors">
-                    {member.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-mono">{toBengaliDigits(member.phone)}</p>
+                  <div className="flex items-center space-x-1.5">
+                    <h3 className="text-sm font-bold text-white font-bengali truncate group-hover:text-indigo-300 transition-colors">
+                      {member.name}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-400 font-mono">{toBengaliDigits(member.phone) || 'মোবাইল নম্বর নেই'}</p>
+                  {member.email && (
+                    <p className="text-[11px] text-slate-500 font-mono truncate">{member.email}</p>
+                  )}
                 </div>
                 <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bengali">
                   সদস্য
@@ -168,8 +175,15 @@ export default function Members() {
               <div className="flex items-center space-x-3">
                 <ProfileAvatar src={selectedMember.profileImage} name={selectedMember.name} sizeClass="w-14 h-14" textClass="text-xl" />
                 <div>
-                  <h2 className="text-xl font-bold text-white">{selectedMember.name}</h2>
-                  <p className="text-xs text-slate-400 font-mono">{selectedMember.phone}</p>
+                  <div className="flex items-center space-x-2">
+                    <h2 className="text-xl font-bold text-white">{selectedMember.name}</h2>
+                    {selectedMember.position !== undefined && selectedMember.position !== null && selectedMember.position !== '' && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        পজিশন {toBengaliDigits(selectedMember.position)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">{toBengaliDigits(selectedMember.phone) || 'মোবাইল নম্বর নেই'}</p>
                 </div>
               </div>
               <button 
@@ -178,6 +192,55 @@ export default function Members() {
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Member Personal & Contact Info Card (Email, Phone, Address) */}
+            <div className="glass-card p-4 rounded-2xl border border-indigo-500/30 bg-slate-900/60 space-y-3 font-bengali">
+              <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-800 pb-2">
+                <User className="w-4 h-4 text-indigo-400" />
+                <span>সদস্যের ব্যক্তিগত তথ্য ও যোগাযোগ</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Email */}
+                <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-slate-400 block font-semibold">ইমেইল ঠিকানা</span>
+                    <span className="text-white font-mono font-medium truncate block">
+                      {selectedMember.email || 'তথ্য পাওয়া যায়নি'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-slate-400 block font-semibold">মোবাইল নম্বর</span>
+                    <span className="text-white font-mono font-bold block">
+                      {toBengaliDigits(selectedMember.phone) || 'তথ্য পাওয়া যায়নি'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center space-x-3 sm:col-span-2">
+                  <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 shrink-0">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-slate-400 block font-semibold">ঠিকানা</span>
+                    <span className="text-white font-medium block">
+                      {selectedMember.address || 'তথ্য পাওয়া যায়নি'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Member Stats */}
